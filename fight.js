@@ -251,40 +251,67 @@ function createCardElement(card) {
     cardElement.dataset.cardId = card.id || '';
     
     // Determine card color class based on type and affinity
-    let cardColorClass = 'card-normal';
+    let affinityClass = 'affinity-normal';
     
     if (card.type === 'attack' && card.affinity) {
-        cardColorClass = `card-${card.affinity}`;
+        affinityClass = `affinity-${card.affinity.toLowerCase()}`;
     } else if (card.type === 'action') {
-        cardColorClass = 'card-action';
+        affinityClass = 'affinity-action';
     }
     
-    cardElement.classList.add(cardColorClass);
+    cardElement.classList.add(affinityClass);
     
     // Avoid any potential undefined values in the HTML
     const cardName = card.name || 'Unknown Card';
     const cardDescription = card.description || 'No description';
     const focusCost = card.focus_cost || 0;
+    const baseDamage = card.base_damage || 0;
     
-    // Build HTML content safely
+    // Build HTML content with the new design
     let htmlContent = `
-        <div class="card-name">${cardName}</div>
+        <div class="card-header">
+            <div class="affinity-icon"></div>
+            <div class="card-name">${cardName}</div>
+        </div>
+        
+        <div class="card-separator"></div>
+        
+        <div class="focus-cost">
+            ${generateFocusIcons(focusCost)}
+        </div>
+        
+        <div class="card-separator"></div>
+        
         <div class="card-description">${cardDescription}</div>
-        <div class="card-cost">Focus: ${focusCost}</div>
+        
+        <div class="card-separator"></div>
+        
+        <div class="card-footer">
+            <div class="damage-container">
+                <div class="damage-icon"></div>
+                <div class="damage-value">${baseDamage}</div>
+            </div>
+        </div>
     `;
-    
-    if (card.type === 'attack' && card.base_damage) {
-        htmlContent += `<div class="card-damage">Damage: ${card.base_damage}</div>`;
-    }
-    
-    if (card.effect_type) {
-        const effectDisplay = card.effect_type.replace ? card.effect_type.replace(/_/g, ' ') : card.effect_type;
-        htmlContent += `<div class="card-effect">Effect: ${effectDisplay}</div>`;
-    }
     
     cardElement.innerHTML = htmlContent;
     
     return cardElement;
+}
+
+function generateFocusIcons(cost) {
+    const totalIcons = 5; // Always show 5 slots
+    let icons = '';
+    
+    for (let i = 0; i < totalIcons; i++) {
+        if (i < cost) {
+            icons += '<div class="focus-icon focus-filled"></div>';
+        } else {
+            icons += '<div class="focus-icon focus-empty"></div>';
+        }
+    }
+    
+    return icons;
 }
 
 // Deal cards to enemy's hand
@@ -597,60 +624,6 @@ function playSelectedCards() {
     displayPlayedCards();
     updateFocusDisplay();
     updateFocusCostDisplay();
-}
-
-// Update the createCardElement function for better card design
-function createCardElement(card) {
-    if (!card) {
-        console.error("Attempted to create card element with null card data");
-        const errorElement = document.createElement('div');
-        errorElement.className = 'card card-error';
-        errorElement.innerHTML = `
-            <div class="card-name">Error</div>
-            <div class="card-description">Card data not available</div>
-        `;
-        return errorElement;
-    }
-    
-    const cardElement = document.createElement('div');
-    cardElement.className = 'card';
-    cardElement.dataset.cardId = card.id || '';
-    
-    // Determine card color class based on type and affinity
-    let cardColorClass = 'card-normal';
-    
-    if (card.type === 'attack' && card.affinity) {
-        cardColorClass = `card-${card.affinity}`;
-    } else if (card.type === 'action') {
-        cardColorClass = 'card-action';
-    }
-    
-    cardElement.classList.add(cardColorClass);
-    
-    // Avoid any potential undefined values in the HTML
-    const cardName = card.name || 'Unknown Card';
-    const cardDescription = card.description || 'No description';
-    const focusCost = card.focus_cost || 0;
-    
-    // Build HTML content safely
-    let htmlContent = `
-        <div class="card-name">${cardName}</div>
-        <div class="card-description">${cardDescription}</div>
-        <div class="card-cost">Focus: ${focusCost}</div>
-    `;
-    
-    if (card.type === 'attack' && card.base_damage) {
-        htmlContent += `<div class="card-damage">Damage: ${card.base_damage}</div>`;
-    }
-    
-    if (card.effect_type) {
-        const effectDisplay = card.effect_type.replace ? card.effect_type.replace(/_/g, ' ') : card.effect_type;
-        htmlContent += `<div class="card-effect">Effect: ${effectDisplay}</div>`;
-    }
-    
-    cardElement.innerHTML = htmlContent;
-    
-    return cardElement;
 }
 
 // Select a card from hand
