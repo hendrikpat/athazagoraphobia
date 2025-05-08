@@ -1,12 +1,166 @@
 :root {
-    --bg-color: #1c2029;
-    --side-bg-color: #1a1e27;
-    --text-color: #e0e0e0;
-    --accent-color: #c49459;
-    --link-color: #e57373;
-    --link-hover-color: #ef9a9a;
-    --header-color: #df9e5c;
-    --divider-color: #3d4049;
+    /* Dark theme (default) */
+    --dark-bg-color: #1c2029;
+    --dark-side-bg-color: #1a1e27;
+    --dark-text-color: #e0e0e0;
+    --dark-accent-color: #c49459;
+    --dark-link-color: #e57373;
+    --dark-link-hover-color: #ef9a9a;
+    --dark-header-color: #df9e5c;
+    --dark-divider-color: #3d4049;
+    --dark-settings-bg: #242836;
+    --dark-switch-bg: #3d4049;
+    
+    /* Light theme */
+    --light-bg-color: #f5f7fa;
+    --light-side-bg-color: #ebeef2;
+    --light-text-color: #333333;
+    --light-accent-color: #c49459;
+    --light-link-color: #c54242;
+    --light-link-hover-color: #e04747;
+    --light-header-color: #b37537;
+    --light-divider-color: #d0d4da;
+    --light-settings-bg: #eef0f5;
+    --light-switch-bg: #d0d4da;
+    
+    /* Active theme (starts with dark) */
+    --bg-color: var(--dark-bg-color);
+    --side-bg-color: var(--dark-side-bg-color);
+    --text-color: var(--dark-text-color);
+    --accent-color: var(--dark-accent-color);
+    --link-color: var(--dark-link-color);
+    --link-hover-color: var(--dark-link-hover-color);
+    --header-color: var(--dark-header-color);
+    --divider-color: var(--dark-divider-color);
+    --settings-bg: var(--dark-settings-bg);
+    --switch-bg: var(--dark-switch-bg);
+}
+/* Add this to the existing CSS file */
+.nav-button {
+    background-color: transparent; /* Make background transparent by default */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+/* Add this to the existing CSS file */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure content area also transitions smoothly */
+#content-area {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+
+/* Light theme specific styles for nav buttons */
+body:has(.theme-switch:checked) .nav-button {
+    background-color: var(--light-side-bg-color);
+    color: var(--light-text-color);
+}
+
+/* Hover state for light theme */
+body:has(.theme-switch:checked) .nav-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Active state for light theme */
+body:has(.theme-switch:checked) .nav-button.active {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-left: 3px solid var(--light-accent-color);
+}
+
+
+/* Theme toggle styles */
+.settings-container {
+    padding: 1.5rem;
+    background-color: var(--settings-bg);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.setting-label {
+    font-weight: bold;
+    margin: 0;
+    font-family: 'Inknut Antiqua', serif;
+    color: var(--header-color);
+}
+
+.theme-toggle {
+    position: relative;
+    display: inline-block;
+}
+
+.theme-switch {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.theme-slider {
+    position: relative;
+    display: block;
+    cursor: pointer;
+    background-color: var(--switch-bg);
+    width: 60px;
+    height: 30px;
+    border-radius: 30px;
+    transition: .4s;
+}
+
+.theme-slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    transition: .4s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.theme-switch:checked + .theme-slider:before {
+    transform: translateX(30px);
+}
+
+.theme-icon {
+    position: absolute;
+    top: 6px;
+    font-size: 16px;
+    transition: opacity 0.3s ease;
+}
+
+.theme-icon.light {
+    left: 8px;
+    opacity: 0.5;
+}
+
+.theme-icon.dark {
+    right: 8px;
+    opacity: 1;
+}
+
+.theme-switch:not(:checked) + .theme-slider .theme-icon.light {
+    opacity: 1;
+}
+
+.theme-switch:not(:checked) + .theme-slider .theme-icon.dark {
+    opacity: 0.5;
+}
+
+/* Apply transitions to elements that change with theme */
+body, #sidebar, .nav-button, .game-title, .story-paragraph, #Play-button {
+    transition: all 0.3s ease;
 }
 
 /* Import the required fonts */
