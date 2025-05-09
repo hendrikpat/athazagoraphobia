@@ -1027,10 +1027,13 @@ async function startCombat(fightId) {
 // Start the game when the page loads
 window.addEventListener('load', initGame);
 
-
+//-------------------------------------------------------------------------------------
+// Function to apply the selected theme
+// Function to apply the selected theme
 // Function to apply the selected theme
 function applyTheme(theme) {
     const root = document.documentElement;
+    console.log(`Applying ${theme} theme`);
     
     if (theme === "light") {
         // Apply light theme variables
@@ -1038,248 +1041,92 @@ function applyTheme(theme) {
         root.style.setProperty('--side-bg-color', 'var(--light-side-bg-color)');
         root.style.setProperty('--text-color', 'var(--light-text-color)');
         root.style.setProperty('--accent-color', 'var(--light-accent-color)');
-        root.style.setProperty('--link-color', 'var(--light-link-color)');
-        root.style.setProperty('--link-hover-color', 'var(--light-link-hover-color)');
-        root.style.setProperty('--header-color', 'var(--light-header-color)');
-        root.style.setProperty('--divider-color', 'var(--light-divider-color)');
-        root.style.setProperty('--settings-bg', 'var(--light-settings-bg)');
-        root.style.setProperty('--switch-bg', 'var(--light-switch-bg)');
-        
-        // Explicitly set body background color
+        // ... (other light theme variables)
+
+        // Set explicit colors
         document.body.style.backgroundColor = 'var(--light-bg-color)';
-        
-        // Force update sidebar elements
         document.querySelectorAll('#sidebar').forEach(el => {
             el.style.backgroundColor = 'var(--light-side-bg-color)';
         });
-        
-        // Update nav buttons
-        document.querySelectorAll('.nav-button').forEach(el => {
-            el.style.backgroundColor = 'var(--light-side-bg-color)';
-            el.style.color = 'var(--light-text-color)';
-        });
     } else {
-        // Apply dark theme variables (default)
+        // Apply dark theme variables
         root.style.setProperty('--bg-color', 'var(--dark-bg-color)');
         root.style.setProperty('--side-bg-color', 'var(--dark-side-bg-color)');
         root.style.setProperty('--text-color', 'var(--dark-text-color)');
         root.style.setProperty('--accent-color', 'var(--dark-accent-color)');
-        root.style.setProperty('--link-color', 'var(--dark-link-color)');
-        root.style.setProperty('--link-hover-color', 'var(--dark-link-hover-color)');
-        root.style.setProperty('--header-color', 'var(--dark-header-color)');
-        root.style.setProperty('--divider-color', 'var(--dark-divider-color)');
-        root.style.setProperty('--settings-bg', 'var(--dark-settings-bg)');
-        root.style.setProperty('--switch-bg', 'var(--dark-switch-bg)');
-        
-        // Explicitly set body background color
+        // ... (other dark theme variables)
+
+        // Set explicit colors
         document.body.style.backgroundColor = 'var(--dark-bg-color)';
-        
-        // Force update sidebar elements
         document.querySelectorAll('#sidebar').forEach(el => {
             el.style.backgroundColor = 'var(--dark-side-bg-color)';
         });
-        
-        // Update nav buttons
-        document.querySelectorAll('.nav-button').forEach(el => {
-            el.style.backgroundColor = 'var(--dark-side-bg-color)';
-            el.style.color = 'var(--dark-text-color)';
-        });
     }
-    
+
+    // Update nav buttons
+    document.querySelectorAll('.nav-button').forEach(el => {
+        el.style.backgroundColor = theme === "light" 
+            ? 'var(--light-side-bg-color)' 
+            : 'var(--dark-side-bg-color)';
+        el.style.color = theme === "light" 
+            ? 'var(--light-text-color)' 
+            : 'var(--dark-text-color)';
+    });
+
     // Update active button styling
     document.querySelectorAll('.nav-button.active').forEach(el => {
-        el.style.borderLeftColor = theme === "light" ? 
-            getComputedStyle(root).getPropertyValue('--light-accent-color') : 
-            getComputedStyle(root).getPropertyValue('--dark-accent-color');
+        el.style.borderLeftColor = theme === "light" 
+            ? 'var(--light-accent-color)' 
+            : 'var(--dark-accent-color)';
     });
-    
-    // Update content area background
-    document.getElementById('content-area').style.backgroundColor = theme === "light" ? 
-        'var(--light-bg-color)' : 'var(--dark-bg-color)';
-}
-// Function to initialize theme switch in settings screen
-function initializeThemeSwitch() {
-    const themeSwitch = document.getElementById("theme-switch");
-    if (themeSwitch) {
-        // Set initial state based on current theme
-        themeSwitch.checked = gameState.theme === "dark";
-        
-        // Add event listener
-        themeSwitch.addEventListener("change", function(e) {
-            toggleTheme(e.target.checked);
-            
-            // Force immediate update of visible elements
-            document.body.style.backgroundColor = e.target.checked ? 
-                'var(--dark-bg-color)' : 'var(--light-bg-color)';
-                
-            document.querySelectorAll('#sidebar').forEach(el => {
-                el.style.backgroundColor = e.target.checked ? 
-                    'var(--dark-side-bg-color)' : 'var(--light-side-bg-color)';
-            });
-            
-            document.querySelectorAll('.nav-button').forEach(el => {
-                el.style.backgroundColor = e.target.checked ? 
-                    'var(--dark-side-bg-color)' : 'var(--light-side-bg-color)';
-                el.style.color = e.target.checked ? 
-                    'var(--dark-text-color)' : 'var(--light-text-color)';
-            });
-        });
-    }
-}
 
-// Function to apply the selected theme
-// Function to apply the selected theme
-function applyTheme(theme) {
-    const root = document.documentElement;
-    
-    if (theme === "light") {
-        // Apply light theme variables
-        root.style.setProperty('--bg-color', 'var(--light-bg-color)');
-        root.style.setProperty('--side-bg-color', 'var(--light-side-bg-color)');
-        root.style.setProperty('--text-color', 'var(--light-text-color)');
-        root.style.setProperty('--accent-color', 'var(--light-accent-color)');
-        root.style.setProperty('--link-color', 'var(--light-link-color)');
-        root.style.setProperty('--link-hover-color', 'var(--light-link-hover-color)');
-        root.style.setProperty('--header-color', 'var(--light-header-color)');
-        root.style.setProperty('--divider-color', 'var(--light-divider-color)');
-        root.style.setProperty('--settings-bg', 'var(--light-settings-bg)');
-        root.style.setProperty('--switch-bg', 'var(--light-switch-bg)');
-        
-        // Explicitly set body background color
-        document.body.style.backgroundColor = 'var(--light-bg-color)';
-        
-        // Force update sidebar elements
-        document.querySelectorAll('#sidebar').forEach(el => {
-            el.style.backgroundColor = 'var(--light-side-bg-color)';
-        });
-        
-        // Update nav buttons
-        document.querySelectorAll('.nav-button').forEach(el => {
-            el.style.backgroundColor = 'var(--light-side-bg-color)';
-            el.style.color = 'var(--light-text-color)';
-        });
-    } else {
-        // Apply dark theme variables (default)
-        root.style.setProperty('--bg-color', 'var(--dark-bg-color)');
-        root.style.setProperty('--side-bg-color', 'var(--dark-side-bg-color)');
-        root.style.setProperty('--text-color', 'var(--dark-text-color)');
-        root.style.setProperty('--accent-color', 'var(--dark-accent-color)');
-        root.style.setProperty('--link-color', 'var(--dark-link-color)');
-        root.style.setProperty('--link-hover-color', 'var(--dark-link-hover-color)');
-        root.style.setProperty('--header-color', 'var(--dark-header-color)');
-        root.style.setProperty('--divider-color', 'var(--dark-divider-color)');
-        root.style.setProperty('--settings-bg', 'var(--dark-settings-bg)');
-        root.style.setProperty('--switch-bg', 'var(--dark-switch-bg)');
-        
-        // Explicitly set body background color
-        document.body.style.backgroundColor = 'var(--dark-bg-color)';
-        
-        // Force update sidebar elements
-        document.querySelectorAll('#sidebar').forEach(el => {
-            el.style.backgroundColor = 'var(--dark-side-bg-color)';
-        });
-        
-        // Update nav buttons
-        document.querySelectorAll('.nav-button').forEach(el => {
-            el.style.backgroundColor = 'var(--dark-side-bg-color)';
-            el.style.color = 'var(--dark-text-color)';
-        });
-    }
-    
-    // Update content area background
+    // Update content area
     const contentArea = document.getElementById('content-area');
     if (contentArea) {
-        contentArea.style.backgroundColor = theme === "light" ? 
-            'var(--light-bg-color)' : 'var(--dark-bg-color)';
+        contentArea.style.backgroundColor = theme === "light" 
+            ? 'var(--light-bg-color)' 
+            : 'var(--dark-bg-color)';
     }
-    
-    console.log("Theme applied:", theme);
+
+    // Update theme classes
+    document.body.classList.toggle('light-theme', theme === "light");
+    document.body.classList.toggle('dark-theme', theme === "dark");
 }
 
-    
-    // Update active button styling
-    document.querySelectorAll('.nav-button.active').forEach(el => {
-        el.style.borderLeftColor = theme === "light" ? 
-            getComputedStyle(root).getPropertyValue('--light-accent-color') : 
-            getComputedStyle(root).getPropertyValue('--dark-accent-color');
-    });
-    
-    // Update content area background
-    document.getElementById('content-area').style.backgroundColor = theme === "light" ? 
-        'var(--light-bg-color)' : 'var(--dark-bg-color)';
-        
-// Function to initialize theme switch in settings screen
-function initializeThemeSwitch() {
-    const themeSwitch = document.getElementById("theme-switch");
-    if (themeSwitch) {
-        // Set initial state based on current theme
-        themeSwitch.checked = gameState.theme === "dark";
-        
-        // Add event listener
-        themeSwitch.addEventListener("change", function(e) {
-            toggleTheme(e.target.checked);
-            
-            // Force immediate update of visible elements
-            document.body.style.backgroundColor = e.target.checked ? 
-                'var(--dark-bg-color)' : 'var(--light-bg-color)';
-                
-            document.querySelectorAll('#sidebar').forEach(el => {
-                el.style.backgroundColor = e.target.checked ? 
-                    'var(--dark-side-bg-color)' : 'var(--light-side-bg-color)';
-            });
-            
-            document.querySelectorAll('.nav-button').forEach(el => {
-                el.style.backgroundColor = e.target.checked ? 
-                    'var(--dark-side-bg-color)' : 'var(--light-side-bg-color)';
-                el.style.color = e.target.checked ? 
-                    'var(--dark-text-color)' : 'var(--light-text-color)';
-            });
-        });
-    }
-}
 // Function to toggle between themes
 function toggleTheme(isDarkMode) {
-    // Set theme in gameState
-    gameState.theme = isDarkMode ? "dark" : "light";
-    
-    // Apply the theme
-    applyTheme(gameState.theme);
-    
-    // Add a class to the body element for easier CSS targeting
-    document.body.classList.toggle('light-theme', gameState.theme === "light");
-    document.body.classList.toggle('dark-theme', gameState.theme === "dark");
-    
-    // Save theme preference to localStorage
-    localStorage.setItem("gameTheme", gameState.theme);
-    
-    console.log("Theme toggled to:", gameState.theme);
+    const theme = isDarkMode ? "dark" : "light";
+    gameState.theme = theme;
+    applyTheme(theme);
+    localStorage.setItem("gameTheme", theme);
+    console.log("Theme toggled to:", theme);
 }
-// Function to initialize theme switch in settings screen
+
+// Initialize theme switch
 function initializeThemeSwitch() {
     const themeSwitch = document.getElementById("theme-switch");
     if (themeSwitch) {
-        // Set initial state based on current theme
+        // Set initial state
         themeSwitch.checked = gameState.theme === "dark";
         
-        console.log("Theme switch initialized, checked:", themeSwitch.checked);
-        
-        // Add event listener
         themeSwitch.addEventListener("change", function(e) {
-            console.log("Theme switch toggled, checked:", e.target.checked);
             toggleTheme(e.target.checked);
         });
-    } else {
-        console.warn("Theme switch element not found");
     }
 }
-// Call once when the page loads
+
+// Initialize theme on page load
+function initializeTheme() {
+    const savedTheme = localStorage.getItem("gameTheme") || "dark";
+    gameState.theme = savedTheme;
+    applyTheme(savedTheme);
+}
+
+// On DOM loaded
 document.addEventListener("DOMContentLoaded", function() {
-    // Initialize theme from localStorage
     initializeTheme();
     
-    // If we're on the settings page, initialize the theme switch
-    const themeSwitch = document.getElementById("theme-switch");
-    if (themeSwitch) {
+    if (document.getElementById("theme-switch")) {
         initializeThemeSwitch();
     }
 });

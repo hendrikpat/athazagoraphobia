@@ -12,7 +12,7 @@
     --dark-switch-bg: #3d4049;
     
     /* Light theme */
-    --light-bg-color: #f5f7fa;
+    --light-bg-color: #ffffff;
     --light-side-bg-color: #ebeef2;
     --light-text-color: #333333;
     --light-accent-color: #c49459;
@@ -77,6 +77,24 @@ body:has(.theme-switch:checked) .nav-button.active {
     margin-bottom: 1.5rem;
     transition: background-color 0.3s ease;
 }
+
+/* Add these to your existing CSS */
+body.light-theme {
+    background-color: var(--light-bg-color) !important;
+}
+
+body.dark-theme {
+    background-color: var(--dark-bg-color) !important;
+}
+
+#content-area.light-theme {
+    background-color: var(--light-bg-color) !important;
+}
+
+#sidebar.light-theme {
+    background-color: var(--light-side-bg-color) !important;
+}
+
 
 .setting-row {
     display: flex;

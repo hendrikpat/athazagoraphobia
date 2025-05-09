@@ -27,12 +27,12 @@
             { "text": "Return to Game", "action": "backToGame" }
         ]
     },
-    "settings_screen": {
-        "title": "Settings",
-       "content": "<div class=\"settings-container\"><div class=\"setting-row\"><p class=\"setting-label\">Display Theme</p><div class=\"theme-toggle\"><input type=\"checkbox\" id=\"theme-switch\" class=\"theme-switch\"><label for=\"theme-switch\" class=\"theme-slider\"><span class=\"theme-icon dark\">🌙</span><span class=\"theme-icon light\">☀️</span></label></div></div><p class=\"story-paragraph\">More game settings will appear here in future updates.</p></div>",
-        "choices": [
-            { "text": "Return to Game", "action": "backToGame" }
-        ],
-         "onLoadFunction": "initializeThemeSwitch"
-    }
+        "settings_screen": {
+            "title": "Settings",
+            "content": "<div class='settings-container'><div class='setting-row'><p class='setting-label'>Display Theme</p><div class='theme-toggle'><input type='checkbox' id='theme-switch' class='theme-switch'><label for='theme-switch' class='theme-slider'><span class='theme-icon dark'>🌙</span><span class='theme-icon light'>☀️</span></label></div></div><p class='story-paragraph'>More game settings will appear here in future updates.</p></div>",
+            "choices": [
+                { "text": "Return to Game", "action": "backToGame" }
+            ],
+            "onLoadFunction": "initializeThemeSwitch"
+        }
 }
