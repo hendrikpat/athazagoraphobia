@@ -903,7 +903,6 @@ body {
 /* Card header section */
 .card-header {
     height: 40px;
-    background-color: rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     padding: 0 10px;
@@ -911,6 +910,34 @@ body {
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
     width: 100%;
+}
+
+.card-header .affinity-fire {
+    background-color: #F5CACA; /* Light red */
+}
+
+.card-header .affinity-water {
+    background-color: #B9BEEF; /* Light blue */
+}
+
+.card-header .affinity-thunder {
+    background-color: #B9EFE6; /* Light cyan */
+}
+
+.card-header .affinity-light {
+    background-color: #FFF6AE; /* Light yellow */
+}
+
+.card-header .affinity-dark {
+    background-color: #D9B9EF; /* Light purple */
+}
+
+.card-header .affinity-normal {
+    background-color: #EFDAB9; /* Light brown */
+}
+
+.card-header .affinity-action {
+    background-color: #BBDBB8; /* Light green */
 }
 
 /* Affinity icon */
@@ -1057,7 +1084,7 @@ body {
 
 /* Affinity-based colors */
 .affinity-fire {
-    background-color: #FFD6D6; /* Light red */
+    background-color: #FFE5E5; /* Light red */
 }
 
 .affinity-fire .affinity-icon::before {
@@ -1065,7 +1092,7 @@ body {
 }
 
 .affinity-water {
-    background-color: #E0F2FE; /* Light blue */
+    background-color: #EFEEFF; /* Light blue */
 }
 
 .affinity-water .affinity-icon::before {
@@ -1073,7 +1100,7 @@ body {
 }
 
 .affinity-thunder {
-    background-color: #FEF3C7; /* Light yellow */
+    background-color: #EEFFFC; /* Light cyan-ish idk */
 }
 
 .affinity-thunder .affinity-icon::before {
@@ -1081,7 +1108,7 @@ body {
 }
 
 .affinity-light {
-    background-color: #FEFCE8; /* Light cream */
+    background-color: #FFFEDA; /* Light cream */
 }
 
 .affinity-light .affinity-icon::before {
@@ -1089,7 +1116,7 @@ body {
 }
 
 .affinity-dark {
-    background-color: #E6D8FD; /* Light purple */
+    background-color: #F5DEFF; /* Light purple */
 }
 
 .affinity-dark .affinity-icon::before {
@@ -1097,7 +1124,7 @@ body {
 }
 
 .affinity-normal {
-    background-color: #F3F4F6; /* Light gray */
+    background-color: #FFF7EE; /* Light ur mom */
 }
 
 .affinity-normal .affinity-icon::before {
@@ -1105,7 +1132,7 @@ body {
 }
 
 .affinity-action {
-    background-color: #D1FAE5; /* Light green */
+    background-color: #E3FFE0; /* Light green */
 }
 
 .affinity-action .affinity-icon::before {
@@ -1115,36 +1142,27 @@ body {
 /* Card color variations (for backward compatibility) */
 .card-normal {
     background: linear-gradient(135deg, #333, #222);
+    border-color: #BDA173;
 }
 
 .card-fire {
     background: linear-gradient(135deg, #722, #411);
-    border-color: #933;
+    border-color: #EF3030;
 }
 
-.card-ice, .card-water {
+.card-water {
     background: linear-gradient(135deg, #249, #124);
-    border-color: #35a;
+    border-color: #6764D8;
 }
 
-.card-lightning, .card-thunder {
+.card-thunder {
     background: linear-gradient(135deg, #762, #431);
-    border-color: #983;
-}
-
-.card-earth {
-    background: linear-gradient(135deg, #563, #342);
-    border-color: #684;
-}
-
-.card-wind {
-    background: linear-gradient(135deg, #599, #366);
-    border-color: #6aa;
-}
+    border-color: #73BDBD;
+}   
 
 .card-light {
     background: linear-gradient(135deg, #777, #555);
-    border-color: #999;
+    border-color: #F3DA4B;
 }
 
 .card-dark {
@@ -1154,7 +1172,7 @@ body {
 
 .card-action {
     background: linear-gradient(135deg, #539, #316);
-    border-color: #64a;
+    border-color: #7B9D70;
 }
 
 /* Selection states for backward compatibility */
