@@ -8,18 +8,20 @@
         "description": "A group of hungry wolves with sharp teeth and claws.",
         "maxHealth": 30,
         "currentHealth": 30,
-        "focus": 4,
-        "difficulty": "normal",
+        "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
           "daggers_normal_1_1", "daggers_fire_1_1", 
           "daggers_fire_1_2", "daggers_thunder_1_1"
         ],
-        "actionDeck": ["heal_1", "focus_1"]
+        "actionDeck": []
       },
       "player": {
         "maxHealth": 100,
         "damageMultiplier": 1.0,
+        "focus": 8,
+        "maxFocus": 10,
+        "minFocus": 5,
         "attackDeck": [
           "sword_fire_1_1", "sword_fire_1_2", 
           "sword_water_1_1", "sword_water_1_2",
@@ -38,4 +40,3 @@
       "nextSceneId": "wolves_weapon"
     }
   }
-  

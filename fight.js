@@ -4,16 +4,15 @@ console.log("Fight.js loaded successfully!");
 let combatState = {
     currentFight: null,
     playerHand: [],
-    enemyHand: [],
     playedCards: [],
     playerAttackPool: [],
     playerActionPool: [],
     enemyAttackPool: [],
     enemyActionPool: [],
     turnCount: 0,
-    playerFocus: 10,
-    maxPlayerFocus: 10,
-    focusRegen: 2,
+    playerFocus: 0, // Will be set from fight config
+    maxPlayerFocus: 0, // Will be set from fight config
+    minPlayerFocus: 0, // Will be set from fight config
     handSize: 10,
     selectedCards: [],
     discardCards: [],
@@ -28,18 +27,24 @@ let combatState = {
     playerDamageBoost: 1.0,
     playerDamageBoostDuration: 0,
     totalFocusCost: 0,
-    // Add health tracking directly in combatState
     playerMaxHealth: 100,
     playerHealth: 100,
     enemyMaxHealth: 0,
     enemyHealth: 0,
-    // Add damage multipliers
     playerDamageMultiplier: 1.0,
     enemyDamageMultiplier: 1.0
 };
 
 const SYNERGIES = {
     perfect: ['fire', 'water', 'thunder', 'light', 'dark'],
+    monochromatic: {
+        fire: ['fire', 'fire', 'fire'],
+        water: ['water', 'water', 'water'],
+        thunder: ['thunder', 'thunder', 'thunder'],
+        light: ['light', 'light', 'light'],
+        dark: ['dark', 'dark', 'dark']
+    },
+    unluck: ['normal', 'normal', 'normal', 'normal', 'normal'],
     regular: [
         ['fire', 'water'],
         ['water', 'thunder'],
@@ -47,6 +52,7 @@ const SYNERGIES = {
         ['light', 'dark']
     ]
 };
+
 
 // Initialize combat with a specific fight
 function initiateCombat(fight) {
@@ -57,7 +63,6 @@ function initiateCombat(fight) {
     
     // Reset combat state
     combatState.playerHand = [];
-    combatState.enemyHand = [];
     combatState.playedCards = [];
     combatState.turnCount = 0;
     
@@ -120,9 +125,31 @@ function initiateCombat(fight) {
         combatState.enemyActionPool = [];
     }
     
-    // Initialize focus
-    combatState.playerFocus = 10;
-    combatState.maxPlayerFocus = 10;
+    // Initialize focus from fight configuration
+    if (fight.player && typeof fight.player.focus === 'number') {
+        combatState.playerFocus = fight.player.focus;
+    } else {
+        console.warn("Player focus not specified, defaulting to 5");
+        combatState.playerFocus = 5;
+    }
+    
+    if (fight.player && typeof fight.player.maxFocus === 'number') {
+        combatState.maxPlayerFocus = fight.player.maxFocus;
+    } else {
+        console.warn("Player max focus not specified, defaulting to 10");
+        combatState.maxPlayerFocus = 10;
+    }
+    
+    if (fight.player && typeof fight.player.minFocus === 'number') {
+        combatState.minPlayerFocus = fight.player.minFocus;
+    } else {
+        console.warn("Player min focus not specified, defaulting to 3");
+        combatState.minPlayerFocus = 3;
+    }
+    
+    // Ensure focus is within bounds
+    combatState.playerFocus = Math.min(combatState.playerFocus, combatState.maxPlayerFocus);
+    combatState.playerFocus = Math.max(combatState.playerFocus, combatState.minPlayerFocus);
     
     // Reset multipliers and effects
     combatState.playerDefenseMultiplier = 1.0;
@@ -323,31 +350,6 @@ function generateFocusIcons(cost) {
     return icons;
 }
 
-// Deal cards to enemy's hand
-function dealEnemyHand() {
-    combatState.enemyHand = [];
-    
-    // Shuffle the attack deck
-    const shuffledAttackDeck = [...combatState.enemyAttackDeck].sort(() => Math.random() - 0.5);
-    
-    // Shuffle the action deck
-    const shuffledActionDeck = [...combatState.enemyActionDeck].sort(() => Math.random() - 0.5);
-    
-    // Deal cards based on enemy difficulty
-    const attackCount = combatState.currentFight.enemy.difficulty === "simple" ? 2 : 3;
-    const actionCount = combatState.currentFight.enemy.difficulty === "simple" ? 1 : 2;
-    
-    // Add attack cards
-    for (let i = 0; i < attackCount && i < shuffledAttackDeck.length; i++) {
-        combatState.enemyHand.push(shuffledAttackDeck[i]);
-    }
-    
-    // Add action cards
-    for (let i = 0; i < actionCount && i < shuffledActionDeck.length; i++) {
-        combatState.enemyHand.push(shuffledActionDeck[i]);
-    }
-}
-
 // Display combat UI
 function displayCombatUI() {
     // Add the card number indicator styles
@@ -434,6 +436,7 @@ function displayCombatUI() {
     // Initialize the affinity chain display
     createAffinityChainDisplay();
 }
+
 
 function setupCardPositionObserver() {
     const observer = new MutationObserver(function(mutations) {
@@ -754,34 +757,74 @@ function addCardNumberIndicatorStyles() {
     document.head.appendChild(style);
 }
 
+// Play selected cards
 function playSelectedCards() {
     // Check if player has enough focus
     if (combatState.totalFocusCost > combatState.playerFocus) {
         displayCombatMessage("Not enough focus to play these cards!");
-        return;
+        return [];
     }
     
-    // Play each selected card in the order they were selected
+    console.log(`Playing ${combatState.selectedCards.length} selected cards`);
+    
+    // First, add all selected cards to played cards to establish the full sequence
+    // but don't apply effects yet
+    const cardsToPlay = [];
     for (const cardId of combatState.selectedCards) {
         const card = getCardById(cardId);
-        if (!card) continue;
+        if (!card) {
+            console.log(`Card ${cardId} not found, skipping`);
+            continue;
+        }
         
-        // Remove card from hand and add to played cards
+        // Remove card from hand
         combatState.playerHand = combatState.playerHand.filter(id => id !== cardId);
+        
+        // Add to played cards
         combatState.playedCards.push(cardId);
         
-        // Apply card effects
-        applyCardEffect(card, 'player');
+        // Store for processing
+        cardsToPlay.push({
+            id: cardId,
+            card: card
+        });
+    }
+    
+    // Now that all cards are in the played sequence, calculate synergies and apply effects
+    const damageLog = [];
+    
+    // Pre-calculate synergy map for all cards
+    const playedCardObjects = combatState.playedCards.map(getCardById).filter(c => c && c.type === 'attack');
+    const affinities = playedCardObjects.map(c => c.affinity ? c.affinity.toLowerCase() : 'normal');
+    const synergyMap = findSynergies(affinities);
+    
+    console.log("Synergy map for this sequence:", synergyMap);
+    
+    // Now apply effects for each card with the pre-calculated synergy information
+    for (const {id: cardId, card} of cardsToPlay) {
+        console.log(`Playing card: ${card.name} (${cardId})`);
+        
+        // Apply card effects with the synergy map
+        const damageDealt = applyCardEffectWithSynergy(card, 'player', synergyMap);
+        if (card.type === 'attack' && damageDealt > 0) {
+            damageLog.push({
+                cardId: cardId,
+                cardName: card.name,
+                damage: damageDealt
+            });
+        }
     }
     
     // Discard selected cards
     for (const cardId of combatState.discardCards) {
+        console.log(`Discarding card: ${cardId}`);
         // Just remove from hand
         combatState.playerHand = combatState.playerHand.filter(id => id !== cardId);
     }
     
     // Deduct focus cost
     combatState.playerFocus -= combatState.totalFocusCost;
+    console.log(`Focus cost: ${combatState.totalFocusCost}, Remaining focus: ${combatState.playerFocus}`);
     
     // Reset selections
     combatState.selectedCards = [];
@@ -793,6 +836,184 @@ function playSelectedCards() {
     displayPlayedCards();
     updateFocusDisplay();
     updateFocusCostDisplay();
+    
+    return damageLog;
+}
+
+// Get synergy bonus from the pre-calculated synergy map
+function getSynergyBonusFromMap(card, synergyMap) {
+    if (!card || card.type !== 'attack' || !card.affinity) {
+        return 0; // No bonus for non-attack cards or cards without affinity
+    }
+    
+    const cardAffinity = card.affinity.toLowerCase();
+    const cardIndex = combatState.playedCards.indexOf(card.id);
+    
+    if (cardIndex === -1) {
+        console.log(`Card ${card.name} not found in played cards`);
+        return 0;
+    }
+    
+    const synergyType = synergyMap[cardIndex];
+    
+    if (!synergyType) {
+        console.log(`No synergy for ${card.name} at index ${cardIndex}`);
+        return 0;
+    }
+    
+    // Apply bonus based on synergy type
+    if (synergyType === 'perfect') {
+        console.log(`Perfect synergy bonus applied to ${card.name}`);
+        return 10;
+    } else if (synergyType === 'unluck' && cardAffinity === 'normal') {
+        console.log(`UNLUCK synergy penalty applied to ${card.name}`);
+        return 8;
+    } else if (typeof synergyType === 'string' && synergyType.startsWith('monochromatic-')) {
+        const element = synergyType.split('-')[1];
+        if (cardAffinity === element) {
+            console.log(`Monochromatic ${element} synergy bonus applied to ${card.name}`);
+            return 5;
+        }
+    } else if (typeof synergyType === 'number') {
+        // Regular synergy
+        console.log(`Regular synergy bonus applied to ${card.name}`);
+        return 2;
+    }
+    
+    return 0;
+}
+
+// Apply card effect with pre-calculated synergy information
+function applyCardEffectWithSynergy(card, source, synergyMap) {
+    if (card.type === 'attack') {
+        // Apply damage
+        let baseDamage = card.base_damage;
+        console.log(`Card ${card.name} base damage: ${baseDamage}`);
+        
+        // Apply damage boost if active
+        if (source === 'player' && combatState.playerDamageBoost > 1.0) {
+            const boostedDamage = Math.floor(baseDamage * combatState.playerDamageBoost);
+            console.log(`Applying damage boost: ${baseDamage} * ${combatState.playerDamageBoost} = ${boostedDamage}`);
+            baseDamage = boostedDamage;
+        }
+        
+        // Apply synergy bonuses based on the pre-calculated synergy map
+        const synergyBonus = getSynergyBonusFromMap(card, synergyMap);
+        console.log(`Synergy bonus for ${card.name}: ${synergyBonus}`);
+        let damage = baseDamage + synergyBonus;
+        
+        if (source === 'player') {
+            // Apply enemy defense multiplier
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.enemyDefenseMultiplier));
+            console.log(`After enemy defense: ${damage} * ${(2 - combatState.enemyDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
+            
+            // Apply enemy vulnerability multiplier
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.enemyVulnerabilityMultiplier);
+            console.log(`After enemy vulnerability: ${damage} * ${combatState.enemyVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
+            
+            // Player attacking enemy
+            combatState.enemyHealth -= damage;
+            displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            console.log(`Final damage dealt to enemy: ${damage}`);
+            
+            // Apply reflect if active
+            if (combatState.enemyReflectAmount > 0) {
+                const reflectDamage = Math.floor(damage * combatState.enemyReflectAmount);
+                combatState.playerHealth -= reflectDamage;
+                displayCombatMessage(`${reflectDamage} damage was reflected back to you!`);
+                console.log(`Damage reflected to player: ${reflectDamage}`);
+                updatePlayerHealth();
+            }
+            
+            updateEnemyHealth();
+            return damage; // Return the damage dealt for logging
+        } else {
+            // Apply player defense multiplier
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.playerDefenseMultiplier));
+            console.log(`After player defense: ${damage} * ${(2 - combatState.playerDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
+            
+            // Apply player vulnerability multiplier
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.playerVulnerabilityMultiplier);
+            console.log(`After player vulnerability: ${damage} * ${combatState.playerVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
+            
+            // Enemy attacking player
+            combatState.playerHealth -= damage;
+            displayCombatMessage(`${combatState.currentFight.enemy.name} dealt ${damage} damage to you!`);
+            console.log(`Final damage dealt to player: ${damage}`);
+            
+            // Apply reflect if active
+            if (combatState.playerReflectAmount > 0) {
+                const reflectDamage = Math.floor(damage * combatState.playerReflectAmount);
+                combatState.enemyHealth -= reflectDamage;
+                displayCombatMessage(`${reflectDamage} damage was reflected back to the enemy!`);
+                console.log(`Damage reflected to enemy: ${reflectDamage}`);
+                updateEnemyHealth();
+            }
+            
+            updatePlayerHealth();
+            return damage; // Return the damage dealt for logging
+        }
+    } else if (card.type === 'action') {
+        // Apply action effect based on card's effect property
+        switch (card.effect_type) {
+            case 'focus_gain':
+                if (source === 'player') {
+                    // For focus gain cards, we'll increase both the current focus AND the minimum focus
+                    // This ensures the player gets full value from the card
+                    const focusGain = Math.floor(card.effect_value);
+                    
+                    // Increase current focus
+                    const newFocus = Math.min(combatState.playerFocus + focusGain, combatState.maxPlayerFocus);
+                    const actualGain = newFocus - combatState.playerFocus;
+                    combatState.playerFocus = newFocus;
+                    
+                    // Also temporarily increase minimum focus for the next turn
+                    // Store this in a new property so it's only applied once
+                    if (!combatState.nextTurnMinFocus || combatState.minPlayerFocus > combatState.nextTurnMinFocus) {
+                        combatState.nextTurnMinFocus = combatState.minPlayerFocus + focusGain;
+                    } else {
+                        combatState.nextTurnMinFocus += focusGain;
+                    }
+                    
+                    // Cap the next turn minimum focus at max focus
+                    combatState.nextTurnMinFocus = Math.min(combatState.nextTurnMinFocus, combatState.maxPlayerFocus);
+                    
+                    displayCombatMessage(`You gained ${actualGain} focus now and will start with at least ${combatState.nextTurnMinFocus} focus next turn!`);
+                    console.log(`Player gained ${actualGain} focus (from ${combatState.playerFocus - actualGain} to ${combatState.playerFocus})`);
+                    console.log(`Next turn minimum focus set to ${combatState.nextTurnMinFocus}`);
+                    updateFocusDisplay();
+                }
+                break;
+            case 'heal':
+                if (source === 'player') {
+                    const healAmount = Math.floor(combatState.playerMaxHealth * card.effect_value);
+                    combatState.playerHealth = Math.min(combatState.playerHealth + healAmount, combatState.playerMaxHealth);
+                    displayCombatMessage(`You healed for ${healAmount} health!`);
+                    console.log(`Player healed for ${healAmount} health`);
+                    updatePlayerHealth();
+                } else {
+                    const healAmount = Math.floor(combatState.enemyMaxHealth * card.effect_value);
+                    combatState.enemyHealth = Math.min(
+                        combatState.enemyHealth + healAmount, 
+                        combatState.enemyMaxHealth
+                    );
+                    displayCombatMessage(`${combatState.currentFight.enemy.name} healed for ${healAmount} health!`);
+                    console.log(`Enemy healed for ${healAmount} health`);
+                    updateEnemyHealth();
+                }
+                break;
+            // Rest of the switch cases remain the same
+        }
+        return 0; // Action cards don't deal damage
+    }
+    
+    // Check win/loss conditions
+    checkCombatEnd();
+    return 0; // Default return if no damage was dealt
 }
 
 // Select a card from hand
@@ -845,65 +1066,85 @@ function updateFocusDisplay() {
     const focusFill = document.querySelector('.focus-fill');
     const focusText = document.querySelector('.focus-bar span');
     
-    focusFill.style.width = `${(combatState.playerFocus / combatState.maxPlayerFocus) * 100}%`;
-    focusText.textContent = `Focus: ${combatState.playerFocus}/${combatState.maxPlayerFocus}`;
+    if (focusFill && focusText) {
+        focusFill.style.width = `${(combatState.playerFocus / combatState.maxPlayerFocus) * 100}%`;
+        focusText.textContent = `Focus: ${combatState.playerFocus}/${combatState.maxPlayerFocus} (Min: ${combatState.minPlayerFocus})`;
+    }
 }
 
 // Apply card effect
 function applyCardEffect(card, source) {
     if (card.type === 'attack') {
         // Apply damage
-        let damage = card.base_damage;
+        let baseDamage = card.base_damage;
+        console.log(`Card ${card.name} base damage: ${baseDamage}`);
         
         // Apply damage boost if active
         if (source === 'player' && combatState.playerDamageBoost > 1.0) {
-            damage = Math.floor(damage * combatState.playerDamageBoost);
+            const boostedDamage = Math.floor(baseDamage * combatState.playerDamageBoost);
+            console.log(`Applying damage boost: ${baseDamage} * ${combatState.playerDamageBoost} = ${boostedDamage}`);
+            baseDamage = boostedDamage;
         }
         
-        // Apply synergy bonuses
-        const synergyBonus = calculateSynergyBonus(source);
-        damage += synergyBonus;
+        // Apply synergy bonuses only to this specific card
+        const synergyBonus = calculateSynergyBonusForCard(card, source);
+        console.log(`Synergy bonus for ${card.name}: ${synergyBonus}`);
+        let damage = baseDamage + synergyBonus;
         
         if (source === 'player') {
             // Apply enemy defense multiplier
-            damage = Math.floor(damage * (2 - combatState.enemyDefenseMultiplier));
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.enemyDefenseMultiplier));
+            console.log(`After enemy defense: ${damage} * ${(2 - combatState.enemyDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
             
             // Apply enemy vulnerability multiplier
-            damage = Math.floor(damage * combatState.enemyVulnerabilityMultiplier);
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.enemyVulnerabilityMultiplier);
+            console.log(`After enemy vulnerability: ${damage} * ${combatState.enemyVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
             
             // Player attacking enemy
             combatState.enemyHealth -= damage;
             displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            console.log(`Final damage dealt to enemy: ${damage}`);
             
             // Apply reflect if active
             if (combatState.enemyReflectAmount > 0) {
                 const reflectDamage = Math.floor(damage * combatState.enemyReflectAmount);
                 combatState.playerHealth -= reflectDamage;
                 displayCombatMessage(`${reflectDamage} damage was reflected back to you!`);
+                console.log(`Damage reflected to player: ${reflectDamage}`);
                 updatePlayerHealth();
             }
             
             updateEnemyHealth();
+            return damage; // Return the damage dealt for logging
         } else {
             // Apply player defense multiplier
-            damage = Math.floor(damage * (2 - combatState.playerDefenseMultiplier));
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.playerDefenseMultiplier));
+            console.log(`After player defense: ${damage} * ${(2 - combatState.playerDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
             
             // Apply player vulnerability multiplier
-            damage = Math.floor(damage * combatState.playerVulnerabilityMultiplier);
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.playerVulnerabilityMultiplier);
+            console.log(`After player vulnerability: ${damage} * ${combatState.playerVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
             
             // Enemy attacking player
             combatState.playerHealth -= damage;
             displayCombatMessage(`${combatState.currentFight.enemy.name} dealt ${damage} damage to you!`);
+            console.log(`Final damage dealt to player: ${damage}`);
             
             // Apply reflect if active
             if (combatState.playerReflectAmount > 0) {
                 const reflectDamage = Math.floor(damage * combatState.playerReflectAmount);
                 combatState.enemyHealth -= reflectDamage;
                 displayCombatMessage(`${reflectDamage} damage was reflected back to the enemy!`);
+                console.log(`Damage reflected to enemy: ${reflectDamage}`);
                 updateEnemyHealth();
             }
             
             updatePlayerHealth();
+            return damage; // Return the damage dealt for logging
         }
     } else if (card.type === 'action') {
         // Apply action effect based on card's effect property
@@ -913,6 +1154,7 @@ function applyCardEffect(card, source) {
                     const healAmount = Math.floor(combatState.playerMaxHealth * card.effect_value);
                     combatState.playerHealth = Math.min(combatState.playerHealth + healAmount, combatState.playerMaxHealth);
                     displayCombatMessage(`You healed for ${healAmount} health!`);
+                    console.log(`Player healed for ${healAmount} health`);
                     updatePlayerHealth();
                 } else {
                     const healAmount = Math.floor(combatState.enemyMaxHealth * card.effect_value);
@@ -921,36 +1163,77 @@ function applyCardEffect(card, source) {
                         combatState.enemyMaxHealth
                     );
                     displayCombatMessage(`${combatState.currentFight.enemy.name} healed for ${healAmount} health!`);
+                    console.log(`Enemy healed for ${healAmount} health`);
                     updateEnemyHealth();
                 }
                 break;
             // Rest of the switch cases remain the same
         }
+        return 0; // Action cards don't deal damage
     }
     
     // Check win/loss conditions
     checkCombatEnd();
+    return 0; // Default return if no damage was dealt
 }
 
-// Calculate synergy bonus based on played cards
-function calculateSynergyBonus(source) {
+// Calculate synergy bonus for a specific card
+function calculateSynergyBonusForCard(card, source) {
+    if (!card || card.type !== 'attack' || !card.affinity) {
+        return 0; // No bonus for non-attack cards or cards without affinity
+    }
+    
+    const cardAffinity = card.affinity.toLowerCase();
     const playedCards = source === 'player' ? combatState.playedCards : combatState.enemyPlayedCards;
-    const cardObjects = playedCards.map(getCardById).filter(card => card && card.type === 'attack');
+    const cardObjects = playedCards.map(getCardById).filter(c => c && c.type === 'attack');
     
-    // Get unique affinities
-    const affinities = new Set(cardObjects.map(card => card.affinity));
+    // Get affinities of all played cards
+    const affinities = cardObjects.map(c => c.affinity.toLowerCase());
+    console.log(`All played affinities: ${affinities.join(', ')}`);
     
-    // Basic synergy: 1 bonus damage per unique affinity beyond the first
-    let bonus = affinities.size > 1 ? affinities.size - 1 : 0;
+    // Find the index of the current card in the played cards
+    const currentCardIndex = playedCards.indexOf(card.id);
+    if (currentCardIndex === -1) {
+        console.log(`Card ${card.name} not found in played cards`);
+        return 0;
+    }
     
-    // Perfect synergy: all 5 elemental affinities
+    // Check for perfect synergy: all 5 elemental affinities
     const elementalAffinities = ['fire', 'water', 'thunder', 'light', 'dark'];
-    const hasAllElements = elementalAffinities.every(aff => affinities.has(aff));
+    const hasAllElements = elementalAffinities.every(aff => affinities.includes(aff));
     
     if (hasAllElements) {
-        // Perfect synergy bonus (massive damage)
-        bonus += 10;
-        displayCombatMessage("PERFECT SYNERGY! Massive damage bonus!");
+        console.log(`Perfect synergy detected for ${card.name}`);
+        return 10; // Perfect synergy bonus
+    }
+    
+    // Check for UNLUCK synergy: 5 normal cards
+    if (cardAffinity === 'normal') {
+        const normalCount = affinities.filter(aff => aff === 'normal').length;
+        if (normalCount >= 5) {
+            console.log(`UNLUCK synergy detected for ${card.name}`);
+            return -5; // Negative bonus (penalty)
+        }
+    }
+    
+    // Check for monochromatic synergies: 3 cards of the same element
+    if (elementalAffinities.includes(cardAffinity)) {
+        const sameElementCount = affinities.filter(aff => aff === cardAffinity).length;
+        if (sameElementCount >= 3) {
+            console.log(`Monochromatic ${cardAffinity} synergy detected for ${card.name}`);
+            return 5; // Monochromatic synergy bonus
+        }
+    }
+    
+    // Check for regular synergies
+    let bonus = 0;
+    for (const [elem1, elem2] of SYNERGIES.regular) {
+        // Only apply bonus if this card is part of the synergy pair
+        if ((cardAffinity === elem1 && affinities.includes(elem2)) || 
+            (cardAffinity === elem2 && affinities.includes(elem1))) {
+            bonus += 2;
+            console.log(`Regular synergy ${elem1}-${elem2} detected for ${card.name}`);
+        }
     }
     
     return bonus;
@@ -997,12 +1280,19 @@ function endPlayerTurn() {
         indicator.parentNode.removeChild(indicator);
     });
 
-    playSelectedCards();
+    console.log("=== PLAYING SELECTED CARDS ===");
+    const damageLog = playSelectedCards();
     
-    // Calculate and apply synergy effects for all played cards
-    const synergyBonus = calculateSynergyBonus('player');
-    if (synergyBonus > 0) {
-        displayCombatMessage(`Synergy bonus: +${synergyBonus} damage!`);
+    // Log the final damage summary
+    if (damageLog.length > 0) {
+        const damageValues = damageLog.map(item => item.damage);
+        const totalDamage = damageValues.reduce((sum, damage) => sum + damage, 0);
+        const damageFormula = damageLog.map(item => item.damage).join(' + ');
+        console.log(`=== DAMAGE SUMMARY ===`);
+        damageLog.forEach(item => {
+            console.log(`${item.cardName}: ${item.damage} damage`);
+        });
+        console.log(`Total: ${damageFormula} = ${totalDamage} DMG`);
     }
     
     // Clear played cards
@@ -1038,6 +1328,8 @@ function sacrificeForFocus() {
 
 // Start player turn
 function startPlayerTurn() {
+    console.log("=== STARTING PLAYER TURN ===");
+    
     combatState.turnCount++;
     displayCombatMessage(`--- Turn ${combatState.turnCount}: Your Turn ---`);
     
@@ -1075,13 +1367,43 @@ function startPlayerTurn() {
         }
     }
     
-    // Regenerate focus
-    combatState.playerFocus = Math.min(combatState.playerFocus + combatState.focusRegen, combatState.maxPlayerFocus);
+    // Check if we have a boosted minimum focus from focus gain cards
+    if (combatState.nextTurnMinFocus && combatState.nextTurnMinFocus > combatState.minPlayerFocus) {
+        const boostedMin = combatState.nextTurnMinFocus;
+        console.log(`Using boosted minimum focus: ${boostedMin} (base: ${combatState.minPlayerFocus})`);
+        
+        // If focus is below the boosted minimum, restore to the boosted minimum
+        if (combatState.playerFocus < boostedMin) {
+            const focusGain = boostedMin - combatState.playerFocus;
+            combatState.playerFocus = boostedMin;
+            displayCombatMessage(`Focus boosted by ${focusGain} from previous focus card!`);
+        }
+        
+        // Reset the next turn minimum focus
+        combatState.nextTurnMinFocus = null;
+    }
+    // Regular minimum focus check
+    else if (combatState.playerFocus < combatState.minPlayerFocus) {
+        console.log(`Focus below minimum (${combatState.playerFocus}/${combatState.minPlayerFocus}), restoring to minimum`);
+        combatState.playerFocus = combatState.minPlayerFocus;
+        displayCombatMessage(`Focus restored to minimum: ${combatState.minPlayerFocus}`);
+    }
+    
+    // No automatic focus regeneration beyond minimum
     updateFocusDisplay();
     
     // Enable player controls
-    document.getElementById('end-turn-btn').disabled = false;
-    document.getElementById('focus-btn').disabled = false;
+    const endTurnBtn = document.getElementById('end-turn-btn');
+    if (endTurnBtn) {
+        console.log("Enabling end turn button");
+        endTurnBtn.disabled = false;
+    }
+    
+    const focusBtn = document.getElementById('focus-btn');
+    if (focusBtn) {
+        console.log("Enabling focus button");
+        focusBtn.disabled = false;
+    }
     
     // Count current attack and action cards
     const attackCards = combatState.playerHand.filter(cardId => {
@@ -1094,8 +1416,11 @@ function startPlayerTurn() {
         return card && card.type === 'action';
     });
     
+    console.log(`Current hand: ${attackCards.length} attack cards, ${actionCards.length} action cards`);
+    
     // Fill up missing attack cards
     const attackCardsToDraw = 7 - attackCards.length;
+    console.log(`Drawing ${attackCardsToDraw} attack cards`);
     for (let i = 0; i < attackCardsToDraw; i++) {
         if (combatState.playerAttackPool.length > 0) {
             const cardIndex = Math.floor(Math.random() * combatState.playerAttackPool.length);
@@ -1106,6 +1431,7 @@ function startPlayerTurn() {
     
     // Fill up missing action cards
     const actionCardsToDraw = 3 - actionCards.length;
+    console.log(`Drawing ${actionCardsToDraw} action cards`);
     for (let i = 0; i < actionCardsToDraw; i++) {
         if (combatState.playerActionPool.length > 0) {
             const cardIndex = Math.floor(Math.random() * combatState.playerActionPool.length);
@@ -1122,17 +1448,44 @@ function startPlayerTurn() {
     combatState.discardCards = [];
     combatState.totalFocusCost = 0;
     updateFocusCostDisplay();
+    
+    console.log("Player turn started successfully");
 }
 
 // Start enemy turn
 function startEnemyTurn() {
+    console.log("=== STARTING ENEMY TURN ===");
     displayCombatMessage(`--- ${combatState.currentFight.enemy.name}'s Turn ---`);
     
-    // Disable player controls
-    document.getElementById('end-turn-btn').disabled = true;
-    document.getElementById('focus-btn').disabled = true;
+    // Disable player controls - safely check if elements exist first
+    const endTurnBtn = document.getElementById('end-turn-btn');
+    if (endTurnBtn) {
+        console.log("Disabling end turn button");
+        endTurnBtn.disabled = true;
+    } else {
+        console.warn("End turn button not found in the DOM");
+    }
+    
+    const focusBtn = document.getElementById('focus-btn');
+    if (focusBtn) {
+        console.log("Disabling focus button");
+        focusBtn.disabled = true;
+    } else {
+        console.warn("Focus button not found in the DOM");
+    }
+    
+    // Log current combat state
+    console.log("Current combat state:", {
+        enemyName: combatState.currentFight?.enemy?.name,
+        enemyHealth: combatState.enemyHealth,
+        enemyMaxHealth: combatState.enemyMaxHealth,
+        difficulty: combatState.currentFight?.enemy?.difficulty,
+        enemyAttackPool: combatState.enemyAttackPool,
+        enemyActionPool: combatState.enemyActionPool
+    });
     
     // Enemy AI selects and plays cards
+    console.log("Scheduling enemy turn execution in 1 second");
     setTimeout(() => {
         executeEnemyTurn();
     }, 1000);
@@ -1140,74 +1493,116 @@ function startEnemyTurn() {
 
 // Execute enemy turn
 function executeEnemyTurn() {
+    console.log("=== EXECUTING ENEMY TURN ===");
+    
     // Clear enemy played cards
     combatState.enemyPlayedCards = [];
     
-    // Simple AI for enemy card selection
-    const enemyFocus = combatState.currentFight.enemy.focus || 5;
-    let remainingFocus = enemyFocus;
+    // Get enemy difficulty
+    const difficulty = combatState.currentFight?.enemy?.difficulty || "easy";
+    console.log(`Enemy difficulty: ${difficulty}`);
     
-    // Sort cards by priority (attack cards first, then action cards)
-    const sortedHand = [...combatState.enemyHand].sort((a, b) => {
-        const cardA = getCardById(a);
-        const cardB = getCardById(b);
-        
-        if (!cardA || !cardB) return 0;
-        
-        // Prioritize attack cards
-        if (cardA.type === 'attack' && cardB.type !== 'attack') return -1;
-        if (cardA.type !== 'attack' && cardB.type === 'attack') return 1;
-        
-        // Then prioritize by damage or effect value
-        if (cardA.type === 'attack' && cardB.type === 'attack') {
-            return cardB.base_damage - cardA.base_damage;
-        }
-        
-        return 0;
-    });
+    // For "easy" difficulty, just pick 2 random cards from the attack deck
+    if (difficulty === "easy") {
+        console.log("Using easy difficulty logic");
+        playEasyEnemyTurn();
+    } else {
+        console.log(`Unhandled difficulty: ${difficulty}, defaulting to easy`);
+        playEasyEnemyTurn();
+    }
+}
+
+// Play enemy turn with "easy" difficulty
+function playEasyEnemyTurn() {
+    console.log("=== PLAYING EASY ENEMY TURN ===");
     
-    // Play cards until out of focus or cards
+    const attackDeck = combatState.enemyAttackPool;
+    console.log("Enemy attack deck:", attackDeck);
+    
+    // Check if there are cards in the attack deck
+    if (!attackDeck || attackDeck.length === 0) {
+        console.error("Enemy attack deck is empty or not defined");
+        console.log("Skipping to player turn due to empty deck");
+        startPlayerTurn(); // Skip to player turn
+        return;
+    }
+    
+    // Select 2 random cards (or fewer if deck is smaller)
+    const cardsToPlay = Math.min(2, attackDeck.length);
+    console.log(`Will play ${cardsToPlay} cards from attack deck of size ${attackDeck.length}`);
+    
     const playedCardIds = [];
     
-    for (const cardId of sortedHand) {
-        const card = getCardById(cardId);
-        if (!card) continue;
+    // Function to play a single card with delay
+    function playCard(index) {
+        console.log(`Playing enemy card ${index + 1}/${cardsToPlay}`);
         
-        // Check if enemy has enough focus
-        if (card.focus_cost <= remainingFocus) {
-            // Play the card
-            playedCardIds.push(cardId);
-            combatState.enemyPlayedCards.push(cardId);
-            remainingFocus -= card.focus_cost;
-            
-            // Display enemy playing card
-            displayCombatMessage(`${combatState.currentFight.enemy.name} plays ${card.name}!`);
-            
-            // Apply card effect
-            applyCardEffect(card, 'enemy');
-            
-            // Break if combat has ended
-            if (!combatState.inCombat) break;
-            
-            // Add a small delay between cards
-            setTimeout(() => {}, 500);
+        // Check if combat has already ended
+        if (checkCombatEnd()) {
+            console.log("Combat has ended, stopping enemy turn");
+            return;
         }
+        
+        if (index >= cardsToPlay) {
+            // All cards played, move to player turn if combat is still ongoing
+            console.log("All cards played, moving to player turn");
+            if (!checkCombatEnd()) {
+                setTimeout(startPlayerTurn, 1000);
+            }
+            return;
+        }
+        
+        // Pick a random card from the attack deck
+        const randomIndex = Math.floor(Math.random() * attackDeck.length);
+        const cardId = attackDeck[randomIndex];
+        console.log(`Selected random card index ${randomIndex}, card ID: ${cardId}`);
+        
+        if (!cardId) {
+            console.error(`Invalid card at index ${randomIndex} in enemy attack deck`);
+            playCard(index + 1); // Skip to next card
+            return;
+        }
+        
+        const card = getCardById(cardId);
+        console.log("Retrieved card data:", card);
+        
+        if (!card) {
+            console.error(`Failed to get card data for ID: ${cardId}`);
+            console.log("Card data lookup failed, checking if card data is loaded:", {
+                attackCardsLoaded: !!combatState.attackCards,
+                actionCardsLoaded: !!combatState.actionCards
+            });
+            playCard(index + 1); // Skip to next card
+            return;
+        }
+        
+        // Add to played cards
+        combatState.enemyPlayedCards.push(cardId);
+        playedCardIds.push(cardId);
+        
+        // Display enemy playing card
+        displayCombatMessage(`${combatState.currentFight.enemy.name} plays ${card.name}!`);
+        
+        // Apply card effect
+        console.log(`Applying effect for enemy card: ${card.name}`);
+        applyCardEffect(card, 'enemy');
+        
+        console.log(`Enemy played card ${index + 1}/${cardsToPlay}: ${card.name} (${cardId})`);
+        
+        // Check if combat has ended after playing this card
+        if (checkCombatEnd()) {
+            console.log("Combat ended after enemy played a card");
+            return;
+        }
+        
+        // Play next card after delay
+        console.log(`Scheduling next card in 800ms`);
+        setTimeout(() => playCard(index + 1), 800);
     }
     
-    // Remove played cards from enemy hand
-    combatState.enemyHand = combatState.enemyHand.filter(id => !playedCardIds.includes(id));
-    
-    // If enemy hand is empty, deal new cards
-    if (combatState.enemyHand.length === 0) {
-        dealEnemyHand();
-    }
-    
-    // End enemy turn if combat is still ongoing
-    if (combatState.inCombat) {
-        setTimeout(() => {
-            startPlayerTurn();
-        }, 1000);
-    }
+    // Start playing cards
+    console.log("Starting to play enemy cards");
+    playCard(0);
 }
 
 // Check if combat has ended
@@ -1235,6 +1630,111 @@ function checkCombatEnd() {
     }
     
     return false;
+}
+
+// Apply card effect
+function applyCardEffect(card, source) {
+    if (card.type === 'attack') {
+        // Apply damage
+        let baseDamage = card.base_damage;
+        console.log(`Card ${card.name} base damage: ${baseDamage}`);
+        
+        // Apply damage boost if active
+        if (source === 'player' && combatState.playerDamageBoost > 1.0) {
+            const boostedDamage = Math.floor(baseDamage * combatState.playerDamageBoost);
+            console.log(`Applying damage boost: ${baseDamage} * ${combatState.playerDamageBoost} = ${boostedDamage}`);
+            baseDamage = boostedDamage;
+        }
+        
+        // Apply synergy bonuses only to this specific card
+        const synergyBonus = calculateSynergyBonusForCard(card, source);
+        console.log(`Synergy bonus for ${card.name}: ${synergyBonus}`);
+        let damage = baseDamage + synergyBonus;
+        
+        if (source === 'player') {
+            // Apply enemy defense multiplier
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.enemyDefenseMultiplier));
+            console.log(`After enemy defense: ${damage} * ${(2 - combatState.enemyDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
+            
+            // Apply enemy vulnerability multiplier
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.enemyVulnerabilityMultiplier);
+            console.log(`After enemy vulnerability: ${damage} * ${combatState.enemyVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
+            
+            // Player attacking enemy
+            combatState.enemyHealth -= damage;
+            displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            console.log(`Final damage dealt to enemy: ${damage}, enemy health now: ${combatState.enemyHealth}`);
+            
+            // Apply reflect if active
+            if (combatState.enemyReflectAmount > 0) {
+                const reflectDamage = Math.floor(damage * combatState.enemyReflectAmount);
+                combatState.playerHealth -= reflectDamage;
+                displayCombatMessage(`${reflectDamage} damage was reflected back to you!`);
+                console.log(`Damage reflected to player: ${reflectDamage}`);
+                updatePlayerHealth();
+            }
+            
+            updateEnemyHealth();
+            
+            // Check if enemy is defeated immediately after taking damage
+            if (combatState.enemyHealth <= 0) {
+                console.log("Enemy health dropped to zero or below, checking combat end");
+                return checkCombatEnd();
+            }
+            
+            return damage; // Return the damage dealt for logging
+        } else {
+            // Apply player defense multiplier
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.playerDefenseMultiplier));
+            console.log(`After player defense: ${damage} * ${(2 - combatState.playerDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
+            
+            // Apply player vulnerability multiplier
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.playerVulnerabilityMultiplier);
+            console.log(`After player vulnerability: ${damage} * ${combatState.playerVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
+            
+            // Enemy attacking player
+            combatState.playerHealth -= damage;
+            displayCombatMessage(`${combatState.currentFight.enemy.name} dealt ${damage} damage to you!`);
+            console.log(`Final damage dealt to player: ${damage}, player health now: ${combatState.playerHealth}`);
+            
+            // Apply reflect if active
+            if (combatState.playerReflectAmount > 0) {
+                const reflectDamage = Math.floor(damage * combatState.playerReflectAmount);
+                combatState.enemyHealth -= reflectDamage;
+                displayCombatMessage(`${reflectDamage} damage was reflected back to the enemy!`);
+                console.log(`Damage reflected to enemy: ${reflectDamage}`);
+                updateEnemyHealth();
+                
+                // Check if enemy is defeated by reflect damage
+                if (combatState.enemyHealth <= 0) {
+                    console.log("Enemy health dropped to zero or below from reflect damage, checking combat end");
+                    return checkCombatEnd();
+                }
+            }
+            
+            updatePlayerHealth();
+            
+            // Check if player is defeated immediately after taking damage
+            if (combatState.playerHealth <= 0) {
+                console.log("Player health dropped to zero or below, checking combat end");
+                return checkCombatEnd();
+            }
+            
+            return damage; // Return the damage dealt for logging
+        }
+    } else if (card.type === 'action') {
+        // Action card logic remains the same
+        // ...
+        
+        // Always check combat end after applying action effects
+        return checkCombatEnd();
+    }
+    
+    return 0; // Default return if no damage was dealt
 }
 
 function toggleCardDiscard(cardId, cardElement) {
@@ -1309,7 +1809,6 @@ function endCombat(result) {
     combatState.inCombat = false;
     combatState.currentFight = null;
     combatState.playerHand = [];
-    combatState.enemyHand = [];
 }
 
 // Update focus cost display
@@ -1488,8 +1987,16 @@ function updateAffinityChainDisplay() {
             if (synergyMap[index - 1] === 'perfect' && synergyMap[index] === 'perfect') {
                 chainLink.className = 'chain-link perfect-chain';
             } else if (synergyMap[index - 1] && synergyMap[index] && 
-                       synergyMap[index - 1] === synergyMap[index]) {
-                chainLink.className = 'chain-link synergy-chain';
+                      synergyMap[index - 1] === synergyMap[index]) {
+                // Check for monochromatic synergies
+                if (typeof synergyMap[index] === 'string' && synergyMap[index].startsWith('monochromatic-')) {
+                    const element = synergyMap[index].split('-')[1];
+                    chainLink.className = `chain-link ${element}-chain`;
+                } else if (synergyMap[index] === 'unluck') {
+                    chainLink.className = 'chain-link unluck-chain';
+                } else {
+                    chainLink.className = 'chain-link synergy-chain';
+                }
             } else {
                 chainLink.className = 'chain-link';
             }
@@ -1503,7 +2010,18 @@ function updateAffinityChainDisplay() {
         
         // Add synergy highlight if part of a synergy
         if (synergyMap[index]) {
-            affinityIcon.classList.add(synergyMap[index] === 'perfect' ? 'perfect-synergy' : 'regular-synergy');
+            if (synergyMap[index] === 'perfect') {
+                affinityIcon.classList.add('perfect-synergy');
+            } else if (typeof synergyMap[index] === 'string' && synergyMap[index].startsWith('monochromatic-')) {
+                affinityIcon.classList.add('monochromatic-synergy');
+                // Add element-specific class
+                const element = synergyMap[index].split('-')[1];
+                affinityIcon.classList.add(`monochromatic-${element}`);
+            } else if (synergyMap[index] === 'unluck') {
+                affinityIcon.classList.add('unluck-synergy');
+            } else {
+                affinityIcon.classList.add('regular-synergy');
+            }
         }
         
         // Set the appropriate affinity class
@@ -1524,7 +2042,7 @@ function updateAffinityChainDisplay() {
 // Find all synergies in the selected cards
 function findSynergies(affinities) {
     // This map will track which positions are part of which synergies
-    // The value will be 'perfect', a synergy group number, or undefined
+    // The value will be 'perfect', 'monochromatic-fire', 'unluck', a synergy group number, or undefined
     const synergyMap = {};
     
     // First check for perfect synergies (sliding window of 5 cards)
@@ -1544,8 +2062,62 @@ function findSynergies(affinities) {
                     synergyMap[j] = 'perfect';
                 }
                 
-                // Skip checking these positions for regular synergies
+                // Skip checking these positions for other synergies
                 i += 4;
+            }
+        }
+    }
+    
+    // Check for UNLUCK synergy (5 normal cards)
+    if (affinities.length >= 5) {
+        for (let i = 0; i <= affinities.length - 5; i++) {
+            // Skip if any position in this window is already part of a synergy
+            if (synergyMap[i] || synergyMap[i+1] || synergyMap[i+2] || synergyMap[i+3] || synergyMap[i+4]) {
+                continue;
+            }
+            
+            const window = affinities.slice(i, i + 5);
+            
+            // Check if all cards are normal
+            const hasUnluckSynergy = window.every(affinity => affinity === 'normal');
+            
+            if (hasUnluckSynergy) {
+                // Mark all positions in this window as part of the unluck synergy
+                for (let j = i; j < i + 5; j++) {
+                    synergyMap[j] = 'unluck';
+                }
+                
+                // Skip checking these positions for other synergies
+                i += 4;
+            }
+        }
+    }
+    
+    // Check for monochromatic synergies (3 cards of the same element)
+    if (affinities.length >= 3) {
+        for (let i = 0; i <= affinities.length - 3; i++) {
+            // Skip if any position in this window is already part of a synergy
+            if (synergyMap[i] || synergyMap[i+1] || synergyMap[i+2]) {
+                continue;
+            }
+            
+            const window = affinities.slice(i, i + 3);
+            
+            // Check each monochromatic synergy type
+            for (const element in SYNERGIES.monochromatic) {
+                // Check if all cards match this element
+                const hasMonochromaticSynergy = window.every(affinity => affinity === element);
+                
+                if (hasMonochromaticSynergy) {
+                    // Mark all positions in this window as part of this monochromatic synergy
+                    for (let j = i; j < i + 3; j++) {
+                        synergyMap[j] = `monochromatic-${element}`;
+                    }
+                    
+                    // Skip checking these positions for other synergies
+                    i += 2;
+                    break; // Break out of the element loop
+                }
             }
         }
     }
@@ -1600,12 +2172,14 @@ function addSynergyChainStyles() {
         
         .regular-synergy {
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            border-radius: 50%;
             transform: scale(1.1);
             z-index: 5;
         }
         
         .perfect-synergy {
             box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+            border-radius: 50%;
             transform: scale(1.15);
             z-index: 10;
         }
