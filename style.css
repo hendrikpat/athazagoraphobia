@@ -1185,3 +1185,119 @@ body {
     outline: 3px solid red;
     box-shadow: 0 0 10px red;
 }
+
+.affinity-chain-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px;
+    margin: 10px 0;
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.affinity-icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chain-icon {
+    width: 100px;
+    height: auto;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0 5px;
+}
+
+.affinity-chain-icon {
+    width: 100px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0 5px;
+    position: relative;
+}
+
+.order-number {
+    position: absolute;
+    bottom: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #333;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.chain-link {
+    width: 100px;
+    height: 100px;
+    background-image: url('./assets/normal-chain.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 0 5px;
+}
+
+/* Chain-specific affinity icon styles with different class names */
+.chain-icon-fire {
+    background-image: url('./assets/fire-icon.png');
+}
+
+.chain-icon-water {
+    background-image: url('./assets/water-icon.png');
+}
+
+.chain-icon-thunder {
+    background-image: url('./assets/thunder-icon.png');
+}
+
+.chain-icon-light {
+    background-image: url('./assets/light-icon.png');
+}
+
+.chain-icon-dark {
+    background-image: url('./assets/dark-icon.png');
+}
+
+.chain-icon-normal {
+    background-image: url('./assets/normal-icon.png');
+}
+
+.chain-icon-action {
+    background-image: url('./assets/action-icon.png');
+}
+
+.synergy-chain {
+    background-image: url('./assets/synergy-chain.png') !important;
+}
+
+.perfect-chain {
+    background-image: url('./assets/perfect-chain.png') !important;
+}
+
+.regular-synergy {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+    transform: scale(1.1);
+    z-index: 5;
+    transition: all 0.3s ease;
+}
+
+.perfect-synergy {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+    transform: scale(1.15);
+    z-index: 10;
+    transition: all 0.3s ease;
+}
