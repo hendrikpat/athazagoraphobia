@@ -35,6 +35,7 @@
     --settings-bg: var(--dark-settings-bg);
     --switch-bg: var(--dark-switch-bg);
 }
+
 /* Add this to the existing CSS file */
 .nav-button {
     background-color: transparent; /* Make background transparent by default */

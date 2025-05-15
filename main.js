@@ -453,6 +453,15 @@ async function displaySystemScreen(screenId) {
     
     contentArea.innerHTML = content;
     
+    // Execute onLoadFunction if specified
+    if (screen.onLoadFunction) {
+        if (typeof window[screen.onLoadFunction] === "function") {
+            window[screen.onLoadFunction]();
+        } else if (typeof screenLoaders[screen.onLoadFunction] === "function") {
+            screenLoaders[screen.onLoadFunction]();
+        }
+    }
+    
     // Initialize journal handlers if on journal screen
     if (screenId === 'journal_screen') {
         initJournalEventHandlers();
@@ -1031,69 +1040,62 @@ window.addEventListener('load', initGame);
 // Function to apply the selected theme
 // Function to apply the selected theme
 // Function to apply the selected theme
+// Ensure gameState exists
+if (!gameState) {
+    gameState = {
+        theme: 'dark' // default theme
+    };
+}
+
+// Apply theme to all elements
 function applyTheme(theme) {
     const root = document.documentElement;
     console.log(`Applying ${theme} theme`);
     
-    if (theme === "light") {
-        // Apply light theme variables
-        root.style.setProperty('--bg-color', 'var(--light-bg-color)');
-        root.style.setProperty('--side-bg-color', 'var(--light-side-bg-color)');
-        root.style.setProperty('--text-color', 'var(--light-text-color)');
-        root.style.setProperty('--accent-color', 'var(--light-accent-color)');
-        // ... (other light theme variables)
+    // Set CSS variables based on theme
+    const vars = {
+        '--bg-color': `var(--${theme}-bg-color)`,
+        '--side-bg-color': `var(--${theme}-side-bg-color)`,
+        '--text-color': `var(--${theme}-text-color)`,
+        '--accent-color': `var(--${theme}-accent-color)`
+        // Add more variables as needed
+    };
 
-        // Set explicit colors
-        document.body.style.backgroundColor = 'var(--light-bg-color)';
-        document.querySelectorAll('#sidebar').forEach(el => {
-            el.style.backgroundColor = 'var(--light-side-bg-color)';
-        });
-    } else {
-        // Apply dark theme variables
-        root.style.setProperty('--bg-color', 'var(--dark-bg-color)');
-        root.style.setProperty('--side-bg-color', 'var(--dark-side-bg-color)');
-        root.style.setProperty('--text-color', 'var(--dark-text-color)');
-        root.style.setProperty('--accent-color', 'var(--dark-accent-color)');
-        // ... (other dark theme variables)
+    Object.entries(vars).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+    });
 
-        // Set explicit colors
-        document.body.style.backgroundColor = 'var(--dark-bg-color)';
-        document.querySelectorAll('#sidebar').forEach(el => {
-            el.style.backgroundColor = 'var(--dark-side-bg-color)';
-        });
-    }
+    // Apply theme classes
+    document.body.classList.toggle('light-theme', theme === "light");
+    document.body.classList.toggle('dark-theme', theme === "dark");
+
+    // Update specific elements
+    document.body.style.backgroundColor = `var(--${theme}-bg-color)`;
+    
+    // Update sidebar
+    document.querySelectorAll('#sidebar').forEach(el => {
+        el.style.backgroundColor = `var(--${theme}-side-bg-color)`;
+    });
 
     // Update nav buttons
     document.querySelectorAll('.nav-button').forEach(el => {
-        el.style.backgroundColor = theme === "light" 
-            ? 'var(--light-side-bg-color)' 
-            : 'var(--dark-side-bg-color)';
-        el.style.color = theme === "light" 
-            ? 'var(--light-text-color)' 
-            : 'var(--dark-text-color)';
+        el.style.backgroundColor = `var(--${theme}-side-bg-color)`;
+        el.style.color = `var(--${theme}-text-color)`;
     });
 
-    // Update active button styling
+    // Update active buttons
     document.querySelectorAll('.nav-button.active').forEach(el => {
-        el.style.borderLeftColor = theme === "light" 
-            ? 'var(--light-accent-color)' 
-            : 'var(--dark-accent-color)';
+        el.style.borderLeftColor = `var(--${theme}-accent-color)`;
     });
 
     // Update content area
     const contentArea = document.getElementById('content-area');
     if (contentArea) {
-        contentArea.style.backgroundColor = theme === "light" 
-            ? 'var(--light-bg-color)' 
-            : 'var(--dark-bg-color)';
+        contentArea.style.backgroundColor = `var(--${theme}-bg-color)`;
     }
-
-    // Update theme classes
-    document.body.classList.toggle('light-theme', theme === "light");
-    document.body.classList.toggle('dark-theme', theme === "dark");
 }
 
-// Function to toggle between themes
+// Toggle between themes
 function toggleTheme(isDarkMode) {
     const theme = isDarkMode ? "dark" : "light";
     gameState.theme = theme;
@@ -1102,33 +1104,61 @@ function toggleTheme(isDarkMode) {
     console.log("Theme toggled to:", theme);
 }
 
-// Initialize theme switch
+// Initialize theme switch functionality
 function initializeThemeSwitch() {
     const themeSwitch = document.getElementById("theme-switch");
-    if (themeSwitch) {
-        // Set initial state
-        themeSwitch.checked = gameState.theme === "dark";
-        
-        themeSwitch.addEventListener("change", function(e) {
-            toggleTheme(e.target.checked);
-        });
+    if (!themeSwitch) {
+        console.warn("Theme switch element not found");
+        return;
     }
+
+    // Set initial state
+    themeSwitch.checked = gameState.theme === "dark";
+    
+    themeSwitch.addEventListener("change", function(e) {
+        toggleTheme(e.target.checked);
+    });
 }
 
 // Initialize theme on page load
+// Modify the initializeTheme function
 function initializeTheme() {
+    // Force dark theme as default if nothing is stored
     const savedTheme = localStorage.getItem("gameTheme") || "dark";
     gameState.theme = savedTheme;
+    
+    // Apply theme immediately
     applyTheme(savedTheme);
+    
+    console.log("Theme initialized as:", savedTheme);
 }
+
+    
+    // Initialize theme switch if present
+    if (document.getElementById("theme-switch")) {
+        initializeThemeSwitch();
+    }
+
+// Screen loaders (if needed for your architecture)
+const screenLoaders = {
+    initializeThemeSwitch
+};
 
 // On DOM loaded
 document.addEventListener("DOMContentLoaded", function() {
     initializeTheme();
     
-    if (document.getElementById("theme-switch")) {
-        initializeThemeSwitch();
+    // Handle screen-specific loaders
+    if (window.screen && screen.onLoadFunction) {
+        if (typeof window[screen.onLoadFunction] === "function") {
+            window[screen.onLoadFunction]();
+        } else if (screenLoaders[screen.onLoadFunction]) {
+            screenLoaders[screen.onLoadFunction]();
+        }
     }
 });
+
+
+
 
 
