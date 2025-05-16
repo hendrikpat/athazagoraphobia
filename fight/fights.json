@@ -1,18 +1,18 @@
 {
-    "wolves_fight": {
+    "wolves_fight_sword": {
       "id": "wolves_fight",
       "name": "Wolf Pack Attack",
       "description": "A pack of wolves surrounds you in the forest.",
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
-        "maxHealth": 30,
-        "currentHealth": 30,
+        "maxHealth": 300,
+        "currentHealth": 300,
         "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
-          "daggers_normal_1_1", "daggers_fire_1_1", 
-          "daggers_fire_1_2", "daggers_thunder_1_1"
+          "wolf_normal_1_1", "wolf_normal_1_2", 
+          "wolf_fire_1_1", "wolf_thunder_1_1"
         ],
         "actionDeck": []
       },
@@ -33,10 +33,114 @@
         ],
         "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
       },
-      "rewards": {
-        "experience": 25,
-        "items": ["wolf_pelt"]
-      },
       "nextSceneId": "wolves_weapon"
+    },
+    "wolves_fight_staff": {
+      "id": "wolves_fight",
+      "name": "Wolf Pack Attack",
+      "description": "A pack of wolves surrounds you in the forest.",
+      "enemy": {
+        "name": "Wolf Pack",
+        "description": "A group of hungry wolves with sharp teeth and claws.",
+        "maxHealth": 300,
+        "currentHealth": 300,
+        "difficulty": "easy",
+        "damageMultiplier": 1.0,
+        "attackDeck": [
+          "wolf_normal_1_1", "wolf_normal_1_2", 
+          "wolf_fire_1_1", "wolf_thunder_1_1"
+        ],
+        "actionDeck": []
+      },
+      "player": {
+        "maxHealth": 100,
+        "damageMultiplier": 1.0,
+        "focus": 8,
+        "maxFocus": 10,
+        "minFocus": 5,
+        "attackDeck": [
+          "staff_fire_1_1", "staff_fire_1_2", 
+          "staff_water_1_1", "staff_water_1_2",
+          "staff_thunder_1_1", "staff_thunder_1_2",
+          "staff_light_1_1", "staff_light_1_2",
+          "staff_dark_1_1", "staff_dark_1_2",
+          "staff_normal_1_1", "staff_normal_1_2",
+          "staff_normal_1_3", "staff_normal_1_4"
+        ],
+        "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
+      },
+      "nextSceneId": ""
+    },
+    "wolves_fight_bow": {
+      "id": "wolves_fight",
+      "name": "Wolf Pack Attack",
+      "description": "A pack of wolves surrounds you in the forest.",
+      "enemy": {
+        "name": "Wolf Pack",
+        "description": "A group of hungry wolves with sharp teeth and claws.",
+        "maxHealth": 300,
+        "currentHealth": 300,
+        "difficulty": "easy",
+        "damageMultiplier": 1.0,
+        "attackDeck": [
+          "wolf_normal_1_1", "wolf_normal_1_2", 
+          "wolf_fire_1_1", "wolf_thunder_1_1"
+        ],
+        "actionDeck": []
+      },
+      "player": {
+        "maxHealth": 100,
+        "damageMultiplier": 1.0,
+        "focus": 8,
+        "maxFocus": 10,
+        "minFocus": 5,
+        "attackDeck": [
+          "bow_fire_1_1", "bow_fire_1_2", 
+          "bow_water_1_1", "bow_water_1_2",
+          "bow_thunder_1_1", "bow_thunder_1_2",
+          "bow_light_1_1", "bow_light_1_2",
+          "bow_dark_1_1", "bow_dark_1_2",
+          "bow_normal_1_1", "bow_normal_1_2",
+          "bow_normal_1_3", "bow_normal_1_4"
+        ],
+        "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
+      },
+      "nextSceneId": ""
+    },
+    "wolves_fight_daggers": {
+      "id": "wolves_fight",
+      "name": "Wolf Pack Attack",
+      "description": "A pack of wolves surrounds you in the forest.",
+      "enemy": {
+        "name": "Wolf Pack",
+        "description": "A group of hungry wolves with sharp teeth and claws.",
+        "maxHealth": 300,
+        "currentHealth": 300,
+        "difficulty": "easy",
+        "damageMultiplier": 1.0,
+        "attackDeck": [
+          "wolf_normal_1_1", "wolf_normal_1_2", 
+          "wolf_fire_1_1", "wolf_thunder_1_1"
+        ],
+        "actionDeck": []
+      },
+      "player": {
+        "maxHealth": 100,
+        "damageMultiplier": 1.0,
+        "focus": 8,
+        "maxFocus": 10,
+        "minFocus": 5,
+        "attackDeck": [
+          "dagger_fire_1_1", "dagger_fire_1_2", 
+          "dagger_water_1_1", "dagger_water_1_2",
+          "dagger_thunder_1_1", "dagger_thunder_1_2",
+          "dagger_light_1_1", "dagger_light_1_2",
+          "dagger_dark_1_1", "dagger_dark_1_2",
+          "dagger_normal_1_1", "dagger_normal_1_2",
+          "dagger_normal_1_3", "dagger_normal_1_4"
+        ],
+        "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
+      },
+      "nextSceneId": ""
     }
   }

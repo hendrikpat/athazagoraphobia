@@ -81,9 +81,10 @@
             }
         ],
         "choices": [
-            { "text": "Look for a weapon", "nextScene": "fight:wolves_fight" },
-            { "text": "Try to intimidate the wolves", "nextScene": "wolves_intimidate" },
-            { "text": "Attempt to flee", "nextScene": "wolves_flee" }
+            { "text": "Pick up the sword", "nextScene": "fight:wolves_fight_sword" },
+            { "text": "Pick up the staff", "nextScene": "fight:wolves_fight_staff" },
+            { "text": "Pick up the bow", "nextScene": "fight:wolves_fight_bow" },
+            { "text": "Pick up the daggers", "nextScene": "fight:wolves_fight_daggers" }
         ]
     },
     "wolves_weapon": {

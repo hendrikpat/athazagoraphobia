@@ -35,7 +35,6 @@
     --settings-bg: var(--dark-settings-bg);
     --switch-bg: var(--dark-switch-bg);
 }
-
 /* Add this to the existing CSS file */
 .nav-button {
     background-color: transparent; /* Make background transparent by default */
@@ -1301,66 +1300,4 @@ body {
     transform: scale(1.15);
     z-index: 10;
     transition: all 0.3s ease;
-}
-
-/* Monochromatic synergy styles */
-.monochromatic-synergy {
-    border-radius: 50%;
-    transform: scale(1.1);
-    z-index: 5;
-    transition: all 0.3s ease;
-}
-
-.monochromatic-fire {
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-}
-
-.monochromatic-water {
-    box-shadow: 0 0 15px rgba(0, 0, 255, 0.7);
-}
-
-.monochromatic-thunder {
-    box-shadow: 0 0 15px rgba(255, 255, 0, 0.7);
-}
-
-.monochromatic-light {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
-}
-
-.monochromatic-dark {
-    box-shadow: 0 0 15px rgba(128, 0, 128, 0.7);
-}
-
-/* UNLUCK synergy style */
-.unluck-synergy {
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-    transform: scale(1.1);
-    z-index: 5;
-    transition: all 0.3s ease;
-    filter: grayscale(100%);
-}
-
-/* Element-specific chain styles */
-.fire-chain {
-    background-image: url('./assets/fire-chain.png') !important;
-}
-
-.water-chain {
-    background-image: url('./assets/water-chain.png') !important;
-}
-
-.thunder-chain {
-    background-image: url('./assets/thunder-chain.png') !important;
-}
-
-.light-chain {
-    background-image: url('./assets/light-chain.png') !important;
-}
-
-.dark-chain {
-    background-image: url('./assets/dark-chain.png') !important;
-}
-
-.unluck-chain {
-    background-image: url('./assets/unluck-chain.png') !important;
 }
