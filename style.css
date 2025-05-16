@@ -453,6 +453,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-color: black;
 }
 
 .save-slot-button {
