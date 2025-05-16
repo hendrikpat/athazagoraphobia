@@ -1205,7 +1205,7 @@ function applyCardEffect(card, source) {
             // Player attacking enemy
             combatState.enemyHealth -= damage;
             displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
-            console.log(`Final damage dealt to enemy: ${damage}`);
+            console.log(`Final damage dealt to enemy: ${damage}, enemy health now: ${combatState.enemyHealth}`);
             
             // Apply reflect if active
             if (combatState.enemyReflectAmount > 0) {
@@ -1217,6 +1217,53 @@ function applyCardEffect(card, source) {
             }
             
             updateEnemyHealth();
+            
+            // Check if enemy is defeated immediately after taking damage
+            if (combatState.enemyHealth <= 0) {
+                console.log("Enemy health dropped to zero or below, checking combat end");
+                return checkCombatEnd();
+            }
+            
+            return damage; // Return the damage dealt for logging
+        } else {
+            // Apply player defense multiplier
+            const defenseAdjustedDamage = Math.floor(damage * (2 - combatState.playerDefenseMultiplier));
+            console.log(`After player defense: ${damage} * ${(2 - combatState.playerDefenseMultiplier)} = ${defenseAdjustedDamage}`);
+            damage = defenseAdjustedDamage;
+            
+            // Apply player vulnerability multiplier
+            const vulnerabilityAdjustedDamage = Math.floor(damage * combatState.playerVulnerabilityMultiplier);
+            console.log(`After player vulnerability: ${damage} * ${combatState.playerVulnerabilityMultiplier} = ${vulnerabilityAdjustedDamage}`);
+            damage = vulnerabilityAdjustedDamage;
+            
+            // Enemy attacking player
+            combatState.playerHealth -= damage;
+            displayCombatMessage(`${combatState.currentFight.enemy.name} dealt ${damage} damage to you!`);
+            console.log(`Final damage dealt to player: ${damage}, player health now: ${combatState.playerHealth}`);
+            
+            // Apply reflect if active
+            if (combatState.playerReflectAmount > 0) {
+                const reflectDamage = Math.floor(damage * combatState.playerReflectAmount);
+                combatState.enemyHealth -= reflectDamage;
+                displayCombatMessage(`${reflectDamage} damage was reflected back to the enemy!`);
+                console.log(`Damage reflected to enemy: ${reflectDamage}`);
+                updateEnemyHealth();
+                
+                // Check if enemy is defeated by reflect damage
+                if (combatState.enemyHealth <= 0) {
+                    console.log("Enemy health dropped to zero or below from reflect damage, checking combat end");
+                    return checkCombatEnd();
+                }
+            }
+            
+            updatePlayerHealth();
+            
+            // Check if player is defeated immediately after taking damage
+            if (combatState.playerHealth <= 0) {
+                console.log("Player health dropped to zero or below, checking combat end");
+                return checkCombatEnd();
+            }
+            
             return damage; // Return the damage dealt for logging
         }
     } else if (card.type === 'action') {
@@ -1493,7 +1540,7 @@ function startPlayerTurn() {
     updateFocusDisplay();
     
     // Enable player controls
-    const endTurnBtn = document.getElementById('end-turn-btn');
+    const endTurnBtn = document.getElementById('end-turn-btn');     
     if (endTurnBtn) {
         console.log("Enabling end turn button");
         endTurnBtn.disabled = false;
@@ -1506,13 +1553,13 @@ function startPlayerTurn() {
     }
     
     // Count current attack and action cards
-    const attackCards = combatState.playerHand.filter(cardId => {
-        const card = getCardById(cardId);
+    const attackCards = combatState.playerHand.filter(cardInstance => {
+        const card = getCardById(cardInstance.cardId);
         return card && card.type === 'attack';
     });
-    
-    const actionCards = combatState.playerHand.filter(cardId => {
-        const card = getCardById(cardId);
+
+    const actionCards = combatState.playerHand.filter(cardInstance => {
+        const card = getCardById(cardInstance.cardId);
         return card && card.type === 'action';
     });
     
@@ -1524,8 +1571,13 @@ function startPlayerTurn() {
     for (let i = 0; i < attackCardsToDraw; i++) {
         if (combatState.playerAttackPool.length > 0) {
             const cardIndex = Math.floor(Math.random() * combatState.playerAttackPool.length);
-            const drawnCard = combatState.playerAttackPool[cardIndex];
-            combatState.playerHand.push(drawnCard);
+            const drawnCardId = combatState.playerAttackPool[cardIndex];
+            // Add a unique instance ID to the card
+            const cardInstance = {
+                cardId: drawnCardId,
+                instanceId: `${drawnCardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+            combatState.playerHand.push(cardInstance);
         }
     }
     
@@ -1535,8 +1587,13 @@ function startPlayerTurn() {
     for (let i = 0; i < actionCardsToDraw; i++) {
         if (combatState.playerActionPool.length > 0) {
             const cardIndex = Math.floor(Math.random() * combatState.playerActionPool.length);
-            const drawnCard = combatState.playerActionPool[cardIndex];
-            combatState.playerHand.push(drawnCard);
+            const drawnCardId = combatState.playerActionPool[cardIndex];
+            // Add a unique instance ID to the card
+            const cardInstance = {
+                cardId: drawnCardId,
+                instanceId: `${drawnCardId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+            combatState.playerHand.push(cardInstance);
         }
     }
     
@@ -1891,6 +1948,7 @@ function applyCardEffect(card, source) {
         
         // Apply damage boost if active
         if (source === 'player' && combatState.playerDamageBoost > 1.0) {
+           
             const boostedDamage = Math.floor(baseDamage * combatState.playerDamageBoost);
             console.log(`Applying damage boost: ${baseDamage} * ${combatState.playerDamageBoost} = ${boostedDamage}`);
             baseDamage = boostedDamage;
@@ -1977,13 +2035,33 @@ function applyCardEffect(card, source) {
             return damage; // Return the damage dealt for logging
         }
     } else if (card.type === 'action') {
-        // Action card logic remains the same
-        // ...
-        
-        // Always check combat end after applying action effects
-        return checkCombatEnd();
+        // Apply action effect based on card's effect property
+        switch (card.effect_type) {
+            case 'heal':
+                if (source === 'player') {
+                    const healAmount = Math.floor(combatState.playerMaxHealth * card.effect_value);
+                    combatState.playerHealth = Math.min(combatState.playerHealth + healAmount, combatState.playerMaxHealth);
+                    displayCombatMessage(`You healed for ${healAmount} health!`);
+                    console.log(`Player healed for ${healAmount} health`);
+                    updatePlayerHealth();
+                } else {
+                    const healAmount = Math.floor(combatState.enemyMaxHealth * card.effect_value);
+                    combatState.enemyHealth = Math.min(
+                        combatState.enemyHealth + healAmount, 
+                        combatState.enemyMaxHealth
+                    );
+                    displayCombatMessage(`${combatState.currentFight.enemy.name} healed for ${healAmount} health!`);
+                    console.log(`Enemy healed for ${healAmount} health`);
+                    updateEnemyHealth();
+                }
+                break;
+            // Rest of the switch cases remain the same
+        }
+        return 0; // Action cards don't deal damage
     }
     
+    // Check win/loss conditions
+    checkCombatEnd();
     return 0; // Default return if no damage was dealt
 }
 

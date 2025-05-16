@@ -6,8 +6,8 @@
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
-        "maxHealth": 300,
-        "currentHealth": 300,
+        "maxHealth": 200,
+        "currentHealth": 200,
         "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
@@ -42,8 +42,8 @@
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
-        "maxHealth": 300,
-        "currentHealth": 300,
+        "maxHealth": 200,
+        "currentHealth": 200,
         "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
@@ -78,8 +78,8 @@
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
-        "maxHealth": 300,
-        "currentHealth": 300,
+        "maxHealth": 200,
+        "currentHealth": 200,
         "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
@@ -114,8 +114,8 @@
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
-        "maxHealth": 300,
-        "currentHealth": 300,
+        "maxHealth": 200,
+        "currentHealth": 200,
         "difficulty": "easy",
         "damageMultiplier": 1.0,
         "attackDeck": [
@@ -131,13 +131,13 @@
         "maxFocus": 10,
         "minFocus": 5,
         "attackDeck": [
-          "dagger_fire_1_1", "dagger_fire_1_2", 
-          "dagger_water_1_1", "dagger_water_1_2",
-          "dagger_thunder_1_1", "dagger_thunder_1_2",
-          "dagger_light_1_1", "dagger_light_1_2",
-          "dagger_dark_1_1", "dagger_dark_1_2",
-          "dagger_normal_1_1", "dagger_normal_1_2",
-          "dagger_normal_1_3", "dagger_normal_1_4"
+          "daggers_fire_1_1", "daggers_fire_1_2", 
+          "daggers_water_1_1", "daggers_water_1_2",
+          "daggers_thunder_1_1", "daggers_thunder_1_2",
+          "daggers_light_1_1", "daggers_light_1_2",
+          "daggers_dark_1_1", "daggers_dark_1_2",
+          "daggers_normal_1_1", "daggers_normal_1_2",
+          "daggers_normal_1_3", "daggers_normal_1_4"
         ],
         "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
       },
