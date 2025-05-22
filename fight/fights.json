@@ -71,7 +71,7 @@
         ],
         "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
       },
-      "nextSceneId": ""
+      "nextSceneId": "wolves_weapon"
     },
     "wolves_fight_bow": {
       "id": "wolves_fight",
@@ -108,7 +108,7 @@
         ],
         "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
       },
-      "nextSceneId": ""
+      "nextSceneId": "wolves_weapon"
     },
     "wolves_fight_daggers": {
       "id": "wolves_fight",
@@ -145,6 +145,6 @@
         ],
         "actionDeck": ["heal_1", "defend_1", "focus_1", "mirror_1", "analyze_1"]
       },
-      "nextSceneId": ""
+      "nextSceneId": "wolves_weapon"
     }
   }

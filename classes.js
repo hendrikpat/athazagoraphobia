@@ -98,12 +98,18 @@ const classSystem = {
         // Add class-specific UI elements
         this.createClassUI();
         
+        // Create and position the ultimate bar
+        if (this.activeClass === 'bow') {
+            this.createUltimateBar();
+        }
+        
         // Add event listeners for class abilities
         this.setupClassEventListeners();
         
         console.log(`Class ${this.activeClass} initialized successfully`);
         return true;
     },
+
     
     // Create class-specific UI elements
     createClassUI: function() {
@@ -141,6 +147,7 @@ const classSystem = {
         // Add the container to the player area
         const playerArea = document.getElementById('player-area');
         if (playerArea) {
+            // Insert the class UI container at the beginning of the player area
             playerArea.insertBefore(container, playerArea.firstChild);
         } else {
             console.error('Player area not found in the DOM');
@@ -152,19 +159,7 @@ const classSystem = {
     
     // Create UI for bow class
     createBowUI: function(container) {
-        // Create the player info container that will hold everything
-        const playerInfoContainer = document.createElement('div');
-        playerInfoContainer.className = 'player-info-container';
-        
-        // Create the top row with passives and health/focus bars
-        const topRow = document.createElement('div');
-        topRow.className = 'player-stats-row';
-        
-        // Left side - Shot Styles
-        const leftSide = document.createElement('div');
-        leftSide.className = 'left-side-controls';
-        
-        // Create shot styles section
+        // Create the shot styles section
         const shotStylesContainer = document.createElement('div');
         shotStylesContainer.className = 'shot-styles-container';
         
@@ -183,7 +178,7 @@ const classSystem = {
         styles.forEach((styleId, index) => {
             const style = this.bowShotStyles[styleId];
             const angle = (index / styles.length) * 2 * Math.PI;
-            const radius = 80; // Smaller radius as requested
+            const radius = 80;
             
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
@@ -204,32 +199,19 @@ const classSystem = {
             shotStyleOptions.appendChild(option);
         });
         
-        // Create current style indicator
+        // Add shot style elements to container
+        shotStylesContainer.appendChild(shotStyleSlot);
+        shotStylesContainer.appendChild(shotStyleOptions);
+        
+        // Add the shot styles container to the main container
+        container.appendChild(shotStylesContainer);
+        
+        // Create current style indicator (moved below the shot style container)
         const currentStyleIndicator = document.createElement('div');
         currentStyleIndicator.id = 'current-shot-style';
         currentStyleIndicator.className = 'current-shot-style';
         currentStyleIndicator.textContent = 'Current Style: None';
-        
-        // Add shot style elements to container
-        shotStylesContainer.appendChild(shotStyleSlot);
-        shotStylesContainer.appendChild(shotStyleOptions);
-        shotStylesContainer.appendChild(currentStyleIndicator);
-        
-        leftSide.appendChild(shotStylesContainer);
-        
-        // Center - Health and Focus bars
-        const centerControls = document.createElement('div');
-        centerControls.className = 'center-controls';
-        
-        // Get the existing player info
-        const playerInfo = document.querySelector('.player-info');
-        if (playerInfo) {
-            centerControls.appendChild(playerInfo);
-        }
-        
-        // Right side - Passive abilities
-        const rightSide = document.createElement('div');
-        rightSide.className = 'right-side-controls';
+        container.appendChild(currentStyleIndicator);
         
         // Create passive indicators section
         const passiveContainer = document.createElement('div');
@@ -257,71 +239,7 @@ const classSystem = {
         // Add passives to container
         passiveContainer.appendChild(criticalEyeIndicator);
         passiveContainer.appendChild(godlySightIndicator);
-        rightSide.appendChild(passiveContainer);
-        
-        // Add all sides to the top row
-        topRow.appendChild(leftSide);
-        topRow.appendChild(centerControls);
-        topRow.appendChild(rightSide);
-        
-        // Add the top row to the player info container
-        playerInfoContainer.appendChild(topRow);
-        
-        // Create the controls row (End Turn button and Focus Cost)
-        const controlsRow = document.createElement('div');
-        controlsRow.className = 'player-controls-container';
-        
-        // Get the existing combat controls
-        const combatControls = document.querySelector('.combat-controls');
-        const focusCostDisplay = document.getElementById('focus-cost-display');
-        
-        if (combatControls) {
-            controlsRow.appendChild(combatControls);
-        }
-        
-        if (focusCostDisplay) {
-            controlsRow.appendChild(focusCostDisplay);
-        }
-        
-        // Add the controls row to the player info container
-        playerInfoContainer.appendChild(controlsRow);
-        
-        // Create ultimate bar (positioned at the bottom)
-        const ultimateContainer = document.createElement('div');
-        ultimateContainer.className = 'ultimate-container';
-        ultimateContainer.innerHTML = `
-            <div class="ultimate-bar-container">
-                <div class="ultimate-bar-fill" style="width: 0%"></div>
-                <div class="ultimate-text">Ultimate: 0%</div>
-            </div>
-            <button id="ultimate-button" class="ultimate-button" disabled>ULTIMATE</button>
-        `;
-        
-        // Add event listener for ultimate button
-        ultimateContainer.querySelector('#ultimate-button').addEventListener('click', () => {
-            this.activateUltimate();
-        });
-        
-        // Add the ultimate container to the player info container
-        playerInfoContainer.appendChild(ultimateContainer);
-        
-        // Replace the existing player area content with our new layout
-        const playerArea = document.getElementById('player-area');
-        if (playerArea) {
-            // Store the player hand element to reinsert it later
-            const playerHand = document.getElementById('player-hand');
-            
-            // Clear the player area
-            playerArea.innerHTML = '';
-            
-            // Add our new player info container
-            playerArea.appendChild(playerInfoContainer);
-            
-            // Re-add the player hand
-            if (playerHand) {
-                playerArea.appendChild(playerHand);
-            }
-        }
+        container.appendChild(passiveContainer);
         
         // Update the UI to reflect the current state
         this.updateUltimateUI();
@@ -606,7 +524,45 @@ selectShotStyle: function(styleId) {
         
         displayCombatMessage("ULTIMATE ACTIVATED! Next attack deals 500% damage!");
     },
-    
+
+    // Create and position the ultimate bar
+    createUltimateBar: function() {
+        // Create ultimate bar
+        const ultimateContainer = document.createElement('div');
+        ultimateContainer.className = 'ultimate-container';
+        ultimateContainer.innerHTML = `
+            <div class="ultimate-bar-container">
+                <div class="ultimate-bar-fill" style="width: 0%"></div>
+                <div class="ultimate-text">Ultimate: 0%</div>
+            </div>
+            <button id="ultimate-button" class="ultimate-button" disabled>ULTIMATE</button>
+        `;
+        
+        // Add event listener for ultimate button
+        ultimateContainer.querySelector('#ultimate-button').addEventListener('click', () => {
+            this.activateUltimate();
+        });
+        
+        // Find the player hand element to insert the ultimate bar after it
+        const playerHand = document.getElementById('player-hand');
+        if (playerHand) {
+            // Insert after player hand
+            if (playerHand.nextSibling) {
+                playerHand.parentNode.insertBefore(ultimateContainer, playerHand.nextSibling);
+            } else {
+                playerHand.parentNode.appendChild(ultimateContainer);
+            }
+        } else {
+            // If player hand not found, add to the player area
+            const playerArea = document.getElementById('player-area');
+            if (playerArea) {
+                playerArea.appendChild(ultimateContainer);
+            }
+        }
+        
+        return ultimateContainer;
+    },
+
     // Check and activate Godly Sight if health is below threshold
     checkGodlySight: function() {
         if (this.activeClass !== 'bow') return;
@@ -699,31 +655,17 @@ selectShotStyle: function(styleId) {
             #class-abilities-container {
                 margin-bottom: 10px;
                 padding: 8px;
-                background-color: rgba(0, 0, 0, 0.7);
                 border-radius: 8px;
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
-            }
-            
-            .player-controls-container {
-                display: flex;
-                justify-content: center;
                 align-items: center;
-                width: 100%;
-                margin-bottom: 10px;
+                position: relative;
             }
             
-            .left-controls {
-                position: absolute;
-                left: 20px;
-                top: 10px;
-            }
-            
-            /* Make health and focus bars thinner */
+            /* Make health and focus bars wider */
             .health-bar, .focus-bar {
-                width: 60%;
-                margin: 0 auto;
+                width: 100%;
+                margin: 5px 0;
             }
             
             .ultimate-container {

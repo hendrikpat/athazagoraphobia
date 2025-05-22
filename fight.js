@@ -370,7 +370,6 @@ function generateFocusIcons(cost) {
     return icons;
 }
 
-// Display combat UI
 function displayCombatUI() {
     // Add the card number indicator styles
     addCardNumberIndicatorStyles();
@@ -416,7 +415,11 @@ function displayCombatUI() {
             <div id="combat-field"></div>
             
             <div id="player-area">
-                <div class="player-info">
+                <!-- Class abilities will be inserted here -->
+                <div id="class-abilities-container"></div>
+                
+                <!-- Health and focus bars -->
+                <div class="player-stats">
                     <div class="health-bar">
                         <div class="health-fill" style="width: ${(combatState.playerHealth / combatState.playerMaxHealth) * 100}%"></div>
                         <span>${Math.floor(combatState.playerHealth)}/${combatState.playerMaxHealth}</span>
@@ -427,16 +430,50 @@ function displayCombatUI() {
                     </div>
                 </div>
                 
-                <div class="combat-controls">
-                    <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
+                <!-- Controls and focus cost -->
+                <div class="player-controls-row">
+                    <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
+                    <div class="combat-controls">
+                        <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
+                    </div>
                 </div>
                 
-                <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
-                
+                <!-- Player hand -->
                 <div id="player-hand" class="card-hand"></div>
+                
+                <!-- Ultimate bar will be inserted after the player hand -->
+                <div id="ultimate-container-placeholder"></div>
             </div>
         </div>
     `;
+    
+    // Add some additional CSS for the new layout
+    const style = document.createElement('style');
+    style.textContent = `
+        .player-stats {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .player-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        #focus-cost-display {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .health-bar, .focus-bar {
+            width: 100%;
+            margin: 5px 0;
+        }
+    `;
+    document.head.appendChild(style);
     
     // Display player's hand
     displayPlayerHand();
@@ -465,6 +502,7 @@ function displayCombatUI() {
         window.classSystem.initialize(combatState.currentFight.player.class);
     }
 }
+
 
 
 function setupCardPositionObserver() {
