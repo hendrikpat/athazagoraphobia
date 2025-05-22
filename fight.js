@@ -416,12 +416,6 @@ function displayCombatUI() {
             <div id="combat-field"></div>
             
             <div id="player-area">
-                <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
-                
-                <div class="combat-controls">
-                    <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
-                </div>
-                
                 <div class="player-info">
                     <div class="health-bar">
                         <div class="health-fill" style="width: ${(combatState.playerHealth / combatState.playerMaxHealth) * 100}%"></div>
@@ -432,6 +426,12 @@ function displayCombatUI() {
                         <span>Focus: ${combatState.playerFocus}/${combatState.maxPlayerFocus}</span>
                     </div>
                 </div>
+                
+                <div class="combat-controls">
+                    <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
+                </div>
+                
+                <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
                 
                 <div id="player-hand" class="card-hand"></div>
             </div>
@@ -455,6 +455,15 @@ function displayCombatUI() {
     
     // Initialize the affinity chain display
     createAffinityChainDisplay();
+    
+    // Initialize class UI if a class is specified in the fight
+    if (combatState.currentFight && 
+        combatState.currentFight.player && 
+        combatState.currentFight.player.class &&
+        window.classSystem) {
+        
+        window.classSystem.initialize(combatState.currentFight.player.class);
+    }
 }
 
 
@@ -630,6 +639,12 @@ function toggleCardSelection(instanceId, cardElement) {
         toggleCardDiscard(instanceId, cardElement);
     }
     
+    // Get the modified focus cost based on class abilities
+    let focusCost = card.focus_cost || 0;
+    if (window.classSystem && typeof window.classSystem.modifyFocusCost === 'function') {
+        focusCost = window.classSystem.modifyFocusCost(card, focusCost);
+    }
+    
     // Toggle selection state
     if (isSelected) {
         // Remove card from selection
@@ -651,10 +666,10 @@ function toggleCardSelection(instanceId, cardElement) {
             updateCardNumbers();
         }
         
-        combatState.totalFocusCost -= card.focus_cost || 0;
+        combatState.totalFocusCost -= focusCost;
     } else {
         // Check if we have enough focus
-        if (combatState.totalFocusCost + (card.focus_cost || 0) <= combatState.playerFocus) {
+        if (combatState.totalFocusCost + focusCost <= combatState.playerFocus) {
             // Add card to selection
             cardElement.classList.add('selected');
             combatState.selectedCards.push(cardInstance);
@@ -662,7 +677,7 @@ function toggleCardSelection(instanceId, cardElement) {
             // Add number indicator
             addCardNumberIndicator(cardElement, combatState.selectedCards.length);
             
-            combatState.totalFocusCost += card.focus_cost || 0;
+            combatState.totalFocusCost += focusCost;
         } else {
             // Not enough focus - don't select the card and don't show a message
             return;
@@ -837,7 +852,7 @@ function playSelectedCards() {
         
         // Apply card effects with the synergy map and collect detailed damage info
         const damageResult = applyCardEffectWithSynergy(card, 'player', synergyMap, true);
-        if (card.type === 'attack' && damageResult.totalDamage > 0) {
+        if (card.type === 'attack' && damageResult && damageResult.totalDamage > 0) {
             damageLog.push({
                 cardId: cardId,
                 cardName: card.name,
@@ -847,7 +862,10 @@ function playSelectedCards() {
                 synergyType: damageResult.synergyType,
                 damageBoost: damageResult.damageBoost,
                 defenseMultiplier: damageResult.defenseMultiplier,
-                vulnerabilityMultiplier: damageResult.vulnerabilityMultiplier
+                vulnerabilityMultiplier: damageResult.vulnerabilityMultiplier,
+                classEffects: damageResult.classEffects || false,
+                isCrit: damageResult.isCrit || false,
+                style: damageResult.style || null
             });
         }
     }
@@ -875,6 +893,11 @@ function playSelectedCards() {
     displayPlayedCards();
     updateFocusDisplay();
     updateFocusCostDisplay();
+    
+    // Process class-specific end of turn effects
+    if (window.classSystem && typeof window.classSystem.processTurnEnd === 'function') {
+        window.classSystem.processTurnEnd();
+    }
     
     return damageLog;
 }
@@ -939,7 +962,7 @@ function getSynergyBonusFromMap(card, synergyMap) {
     } else if (typeof synergyType === 'string' && synergyType.startsWith('monochromatic-')) {
         const element = synergyType.split('-')[1];
         if (cardAffinity === element) {
-            console.log(`Monochromatic ${element} synergy multiplier applied to ${card.name}`);
+            console.log(`Monochromatic ${element} synergy multiplier applied to ${card.name}: x1.5`);
             return { multiplier: 1.5, type: `monochromatic-${element}` }; // 50% damage increase
         }
     } else if (typeof synergyType === 'number') {
@@ -1013,6 +1036,18 @@ function applyCardEffectWithSynergy(card, source, synergyMap, collectDetails = f
                 damageDetails.totalDamage = damage;
             }
             
+            // Apply class-specific effects (if class system is available)
+            if (window.classSystem && typeof window.classSystem.modifyCardEffect === 'function') {
+                const originalDamage = damage;
+                damage = window.classSystem.modifyCardEffect(card, damage);
+                console.log(`After class effects: ${originalDamage} → ${damage}`);
+                
+                if (collectDetails) {
+                    damageDetails.totalDamage = damage;
+                    damageDetails.classEffects = true;
+                }
+            }
+            
             // Player attacking enemy
             combatState.enemyHealth -= damage;
             displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
@@ -1028,6 +1063,26 @@ function applyCardEffectWithSynergy(card, source, synergyMap, collectDetails = f
             }
             
             updateEnemyHealth();
+            
+            // Check for secondary attack (for Bow's Spray shot style)
+            if (window.classSystem && 
+                typeof window.classSystem.shouldApplySecondaryAttack === 'function' && 
+                window.classSystem.shouldApplySecondaryAttack()) {
+                
+                const secondaryMultiplier = window.classSystem.getSecondaryAttackMultiplier();
+                const secondaryDamage = Math.floor(damage * secondaryMultiplier);
+                
+                if (secondaryDamage > 0) {
+                    // Apply secondary attack after a short delay
+                    setTimeout(() => {
+                        combatState.enemyHealth -= secondaryDamage;
+                        displayCombatMessage(`Spray effect: You dealt an additional ${secondaryDamage} damage!`);
+                        updateEnemyHealth();
+                        checkCombatEnd();
+                    }, 500);
+                }
+            }
+            
             return collectDetails ? damageDetails : damage;
         } else {
             // Apply player defense multiplier
@@ -1425,17 +1480,23 @@ function endPlayerTurn() {
             const defenseText = item.defenseMultiplier !== 1.0 ? ` x${item.defenseMultiplier.toFixed(1)} def` : '';
             const vulnText = item.vulnerabilityMultiplier !== 1.0 ? ` x${item.vulnerabilityMultiplier.toFixed(1)} vuln` : '';
             
+            // Add crit text if applicable
+            const critText = item.isCrit ? ' %cCRITICAL HIT!%c' : '';
+            const styleText = item.style ? ` (${item.style})` : '';
+            
             // Combine all parts with different colors
             console.log(
-                `%c${item.cardName}: %c${item.damage} damage %c[${baseDamageText}%c${synergyText}%c]%c${damageBoostText}%c${defenseText}%c${vulnText}`, 
-                'color:rgb(238, 53, 53); font-weight: bold;', // Card name
-                'color:rgb(255, 0, 0); font-weight: bold;',   // Total damage
-                'color:rgb(0, 128, 0);',                      // Base damage
-                'color:rgb(255, 165, 0);',                    // Synergy multiplier
-                'color:rgb(0, 128, 0);',                      // Closing bracket
-                'color:rgb(0, 0, 255);',                      // Damage boost
-                'color:rgb(128, 0, 128);',                    // Defense multiplier
-                'color:rgb(255, 0, 255);'                     // Vulnerability multiplier
+                `%c${item.cardName}:${critText} %c${item.damage} damage %c[${baseDamageText}%c${synergyText}%c]%c${damageBoostText}%c${defenseText}%c${vulnText}${styleText}`, 
+                'color:rgb(238, 53, 53); font-weight: bold;',   // Card name
+                item.isCrit ? 'color:rgb(255, 215, 0); font-weight: bold;' : '',  // CRITICAL HIT text
+                item.isCrit ? '' : '',  // Reset after CRITICAL HIT
+                'color:rgb(255, 0, 0); font-weight: bold;',     // Total damage
+                'color:rgb(0, 128, 0);',                        // Base damage
+                'color:rgb(255, 165, 0);',                      // Synergy multiplier
+                'color:rgb(0, 128, 0);',                        // Closing bracket
+                'color:rgb(0, 0, 255);',                        // Damage boost
+                'color:rgb(128, 0, 128);',                      // Defense multiplier
+                'color:rgb(255, 0, 255);'                       // Vulnerability multiplier
             );
         });
         
@@ -2505,6 +2566,30 @@ function addSynergyChainStyles() {
             background-image: url('./assets/perfect-chain.png') !important;
         }
         
+        .fire-chain {
+            background-image: url('./assets/fire-chain.png') !important;
+        }
+        
+        .water-chain {
+            background-image: url('./assets/water-chain.png') !important;
+        }
+        
+        .thunder-chain {
+            background-image: url('./assets/thunder-chain.png') !important;
+        }
+        
+        .light-chain {
+            background-image: url('./assets/light-chain.png') !important;
+        }
+        
+        .dark-chain {
+            background-image: url('./assets/dark-chain.png') !important;
+        }
+        
+        .unluck-chain {
+            background-image: url('./assets/unluck-chain.png') !important;
+        }
+        
         .regular-synergy {
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
             border-radius: 50%;
@@ -2517,6 +2602,40 @@ function addSynergyChainStyles() {
             border-radius: 50%;
             transform: scale(1.15);
             z-index: 10;
+        }
+        
+        .monochromatic-synergy {
+            border-radius: 50%;
+            transform: scale(1.12);
+            z-index: 7;
+        }
+        
+        .monochromatic-fire {
+            box-shadow: 0 0 18px rgba(231, 76, 60, 0.8);
+        }
+        
+        .monochromatic-water {
+            box-shadow: 0 0 18px rgba(52, 152, 219, 0.8);
+        }
+        
+        .monochromatic-thunder {
+            box-shadow: 0 0 18px rgba(241, 196, 15, 0.8);
+        }
+        
+        .monochromatic-light {
+            box-shadow: 0 0 18px rgba(236, 240, 241, 0.8);
+        }
+        
+        .monochromatic-dark {
+            box-shadow: 0 0 18px rgba(52, 73, 94, 0.8);
+        }
+        
+        .unluck-synergy {
+            box-shadow: 0 0 15px rgba(149, 165, 166, 0.7);
+            border-radius: 50%;
+            transform: scale(1.05);
+            z-index: 3;
+            opacity: 0.8;
         }
     `;
     

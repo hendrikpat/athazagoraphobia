@@ -17,6 +17,7 @@
         "actionDeck": []
       },
       "player": {
+        "class": "sword",
         "maxHealth": 100,
         "damageMultiplier": 1.0,
         "focus": 8,
@@ -53,6 +54,7 @@
         "actionDeck": []
       },
       "player": {
+        "class": "staff",
         "maxHealth": 100,
         "damageMultiplier": 1.0,
         "focus": 8,
@@ -89,6 +91,7 @@
         "actionDeck": []
       },
       "player": {
+        "class": "bow",
         "maxHealth": 100,
         "damageMultiplier": 1.0,
         "focus": 8,
@@ -125,6 +128,7 @@
         "actionDeck": []
       },
       "player": {
+        "class": "daggers",
         "maxHealth": 100,
         "damageMultiplier": 1.0,
         "focus": 8,
