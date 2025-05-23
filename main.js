@@ -1158,6 +1158,65 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+// Fantasy Name Generator Components
+const nameComponents = {
+    elf: {
+        prefixes: ['Ael', 'Cel', 'Elu', 'Gal', 'Leg', 'Lin', 'Mor', 'Sil', 'Thal', 'Vel'],
+        suffixes: ['adrin', 'edor', 'endil', 'ion', 'las', 'moth', 'reth', 'rond', 'wen', 'wing']
+    },
+    dwarf: {
+        prefixes: ['Bal', 'Dain', 'Dwar', 'Gim', 'Grom', 'Kaz', 'Mor', 'Nar', 'Thor', 'Urist'],
+        suffixes: ['ak', 'dan', 'dur', 'grim', 'iron', 'stone', 'beard', 'axe', 'hammer', 'shield']
+    },
+    human: {
+        prefixes: ['Alar', 'Bren', 'Cad', 'Dun', 'Egan', 'Finn', 'Gar', 'Hal', 'Ivan', 'Kael'],
+        suffixes: ['ric', 'ward', 'bert', 'ton', 'wick', 'ford', 'hart', 'bold', 'wise', 'strong']
+    },
+    orc: {
+        prefixes: ['Gash', 'Grok', 'Morg', 'Nar', 'Ork', 'Skar', 'Thok', 'Urg', 'Vash', 'Zog'],
+        suffixes: ['ub', 'ak', 'osh', 'urk', 'gul', 'ash', 'nog', 'lok', 'bur', 'dak']
+    },
+    dragon: {
+        prefixes: ['Anc', 'Baham', 'Drac', 'Fyr', 'Igni', 'Pyr', 'Scal', 'Smaug', 'Tiam', 'Verm'],
+        suffixes: ['athos', 'orion', 'ander', 'ius', 'oth', 'ax', 'eon', 'ys', 'ath', 'ion']
+    }
+};
+
+function generateFantasyName() {
+    const types = Object.keys(nameComponents);
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    const components = nameComponents[randomType];
+    
+    const randomPrefix = components.prefixes[Math.floor(Math.random() * components.prefixes.length)];
+    const randomSuffix = components.suffixes[Math.floor(Math.random() * components.suffixes.length)];
+    
+    return randomPrefix + randomSuffix;
+}
+
+// Add event listener when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add the event listener for the generate name button
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'generate-name') {
+            const generatedName = generateFantasyName();
+            const nameInput = document.getElementById('player-name');
+            if (nameInput) {
+                nameInput.value = generatedName;
+                // Add a little animation effect
+                setTimeout(() => {
+                    nameInput.style.backgroundColor = '';
+                }, 500);
+            }
+        }
+    });
+});
+
+
+
+
+
+
+
 
 
 

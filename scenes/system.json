@@ -50,4 +50,5 @@
         ],
         "onLoadFunction": "initializeThemeSwitch"
     }
-}
+
+} 

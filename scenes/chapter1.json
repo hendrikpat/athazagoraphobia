@@ -36,7 +36,8 @@
     "self_focus": {
         "title": "CHAPTER 1",
         "content": [
-            "<p class=\"story-paragraph\">Your name is: <input type=\"text\" id=\"player-name\" class=\"name-input\" autocomplete=\"off\"><button id=\"name-submit\" class=\"choice-button\" style=\"display:inline-block; padding:5px 10px;\">Enter</button></p>"
+            "<p class=\"story-paragraph\">Your name is: <input type=\"text\" id=\"player-name\" class=\"name-input\" autocomplete=\"off\"><button id=\"name-submit\" class=\"choice-button\" style=\"display:inline-block; padding:5px 10px; margin-left:10px;\">Enter</button></p>",
+            "<p class=\"story-paragraph\" style=\"text-align:center; margin-top:15px;\"><button id=\"generate-name\" class=\"choice-button\" style=\"background: linear-gradient(45deg, #fffff, #8b5cf6); border:none; padding:8px 16px;\">✨ Random Name</button></p>"
         ],
         "noChoices": true
     },
