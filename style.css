@@ -1,4 +1,68 @@
+/* Character Stats Styling */
+.stats-container {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 2px solid #4a5568;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 15px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 
+.stats-header {
+    color: #f7fafc;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #4a5568;
+    letter-spacing: 1px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2px 0;
+    padding: 2px 0;
+}
+
+.stat-label {
+    color: #a0aec0;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: right;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Gender selection styling */
+.gender-option {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    color: #a0aec0;
+}
+
+.gender-option:hover {
+    background-color: #4a5568;
+    color: #f7fafc;
+}
+
+.gender-option.selected {
+    background-color: #6366f1;
+    color: #ffffff;
+    font-weight: bold;
+}
 
 
 :root {

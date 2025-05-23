@@ -1158,7 +1158,46 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// Fantasy Name Generator Components
+//--------------------------------------------------------------------------
+// Character stats management
+const characterStats = {
+    name: 'Unknown',
+    gender: 'Unknown'
+};
+
+// Function to update character stats display
+function updateStatsDisplay() {
+    const nameElement = document.getElementById('char-name');
+    const genderElement = document.getElementById('char-gender');
+    
+    // Try to get name from various sources
+    let displayName = characterStats.name;
+    if (typeof gameState !== 'undefined' && gameState.character && gameState.character.name) {
+        displayName = gameState.character.name;
+        characterStats.name = displayName;
+    } else if (typeof window.character !== 'undefined' && window.character.name) {
+        displayName = window.character.name;
+        characterStats.name = displayName;
+    }
+    
+    if (nameElement) nameElement.textContent = displayName;
+    if (genderElement) genderElement.textContent = characterStats.gender;
+}
+
+// Function to sync stats with game state (call this when scenes change)
+function syncStatsWithGameState() {
+    if (typeof gameState !== 'undefined' && gameState.character) {
+        if (gameState.character.name && gameState.character.name !== 'Unknown') {
+            characterStats.name = gameState.character.name;
+        }
+        if (gameState.character.gender && gameState.character.gender !== 'Unknown') {
+            characterStats.gender = gameState.character.gender;
+        }
+    }
+    updateStatsDisplay();
+}
+
+// Fantasy Name Generator Components (same as before)
 const nameComponents = {
     elf: {
         prefixes: ['Ael', 'Cel', 'Elu', 'Gal', 'Leg', 'Lin', 'Mor', 'Sil', 'Thal', 'Vel'],
@@ -1193,25 +1232,78 @@ function generateFantasyName() {
     return randomPrefix + randomSuffix;
 }
 
-// Add event listener when the page loads
+// Event listeners for character creation
 document.addEventListener('DOMContentLoaded', function() {
-    // Add the event listener for the generate name button
+    // Initialize stats display
+    updateStatsDisplay();
+    
+    // Handle name generation
     document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'generate-name') {
             const generatedName = generateFantasyName();
             const nameInput = document.getElementById('player-name');
             if (nameInput) {
                 nameInput.value = generatedName;
-                // Add a little animation effect
                 setTimeout(() => {
                     nameInput.style.backgroundColor = '';
                 }, 500);
             }
         }
+        
+        // Handle name submission
+        if (e.target && e.target.id === 'name-submit') {
+            const nameInput = document.getElementById('player-name');
+            if (nameInput && nameInput.value.trim()) {
+                const enteredName = nameInput.value.trim();
+                
+                // Update both our stats and the game's character system
+                characterStats.name = enteredName;
+                
+                // Update game state if it exists
+                if (typeof gameState !== 'undefined' && gameState.character) {
+                    gameState.character.name = enteredName;
+                } else if (typeof window.character !== 'undefined') {
+                    window.character.name = enteredName;
+                }
+                
+                updateStatsDisplay();
+                
+                // Add visual feedback
+                const statsNameElement = document.getElementById('char-name');
+                if (statsNameElement) {
+                    statsNameElement.style.color = '#48bb78';
+                    setTimeout(() => {
+                        statsNameElement.style.color = '#e2e8f0';
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Handle gender selection
+        if (e.target && e.target.classList.contains('gender-option')) {
+            // Remove selected class from all options
+            document.querySelectorAll('.gender-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            e.target.classList.add('selected');
+            
+            // Update character stats
+            characterStats.gender = e.target.id === 'male-option' ? 'Male' : 'Female';
+            updateStatsDisplay();
+            
+            // Add visual feedback
+            const statsGenderElement = document.getElementById('char-gender');
+            if (statsGenderElement) {
+                statsGenderElement.style.color = '#48bb78';
+                setTimeout(() => {
+                    statsGenderElement.style.color = '#e2e8f0';
+                }, 1000);
+            }
+        }
     });
 });
-
-
 
 
 
