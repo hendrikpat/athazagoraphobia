@@ -415,11 +415,22 @@ function displayCombatUI() {
             <div id="combat-field"></div>
             
             <div id="player-area">
-                <!-- Class abilities will be inserted here -->
-                <div id="class-abilities-container"></div>
+                <div class="player-controls-row">
+                    <div class="left-controls" id="left-controls">
+                        <!-- Shot styles will go here -->
+                    </div>
+                    
+                    <div class="center-controls">
+                        <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
+                        <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
+                    </div>
+                    
+                    <div class="right-controls" id="right-controls">
+                        <!-- Passive indicators will go here -->
+                    </div>
+                </div>
                 
-                <!-- Health and focus bars -->
-                <div class="player-stats">
+                <div class="player-info">
                     <div class="health-bar">
                         <div class="health-fill" style="width: ${(combatState.playerHealth / combatState.playerMaxHealth) * 100}%"></div>
                         <span>${Math.floor(combatState.playerHealth)}/${combatState.playerMaxHealth}</span>
@@ -430,50 +441,12 @@ function displayCombatUI() {
                     </div>
                 </div>
                 
-                <!-- Controls and focus cost -->
-                <div class="player-controls-row">
-                    <div id="focus-cost-display">Total Focus Cost: ${combatState.totalFocusCost || 0}</div>
-                    <div class="combat-controls">
-                        <button id="end-turn-btn" onclick="endPlayerTurn()">End Turn</button>
-                    </div>
-                </div>
-                
-                <!-- Player hand -->
                 <div id="player-hand" class="card-hand"></div>
                 
-                <!-- Ultimate bar will be inserted after the player hand -->
-                <div id="ultimate-container-placeholder"></div>
+                <!-- Ultimate bar will be added here by the class system -->
             </div>
         </div>
     `;
-    
-    // Add some additional CSS for the new layout
-    const style = document.createElement('style');
-    style.textContent = `
-        .player-stats {
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .player-controls-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        #focus-cost-display {
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .health-bar, .focus-bar {
-            width: 100%;
-            margin: 5px 0;
-        }
-    `;
-    document.head.appendChild(style);
     
     // Display player's hand
     displayPlayerHand();
@@ -502,6 +475,7 @@ function displayCombatUI() {
         window.classSystem.initialize(combatState.currentFight.player.class);
     }
 }
+
 
 
 
@@ -903,6 +877,7 @@ function playSelectedCards() {
                 vulnerabilityMultiplier: damageResult.vulnerabilityMultiplier,
                 classEffects: damageResult.classEffects || false,
                 isCrit: damageResult.isCrit || false,
+                critMultiplier: damageResult.critMultiplier || 1.0,
                 style: damageResult.style || null
             });
         }
@@ -1023,7 +998,10 @@ function applyCardEffectWithSynergy(card, source, synergyMap, collectDetails = f
             damageBoost: 1.0,
             defenseMultiplier: 1.0,
             vulnerabilityMultiplier: 1.0,
-            totalDamage: 0
+            totalDamage: 0,
+            isCrit: false,
+            critMultiplier: 1.0,
+            style: null
         } : null;
         
         // Apply damage
@@ -1071,24 +1049,49 @@ function applyCardEffectWithSynergy(card, source, synergyMap, collectDetails = f
             
             if (collectDetails) {
                 damageDetails.vulnerabilityMultiplier = vulnerabilityMultiplier;
-                damageDetails.totalDamage = damage;
             }
             
             // Apply class-specific effects (if class system is available)
             if (window.classSystem && typeof window.classSystem.modifyCardEffect === 'function') {
                 const originalDamage = damage;
-                damage = window.classSystem.modifyCardEffect(card, damage);
-                console.log(`After class effects: ${originalDamage} → ${damage}`);
+                const classResult = window.classSystem.modifyCardEffect(card, damage);
                 
-                if (collectDetails) {
-                    damageDetails.totalDamage = damage;
-                    damageDetails.classEffects = true;
+                // THIS IS THE KEY CHANGE - Properly handle the result from modifyCardEffect
+                if (typeof classResult === 'object' && classResult !== null) {
+                    // If it's an object with damage and other properties
+                    damage = classResult.damage || damage;
+                    
+                    // Store critical hit information if available
+                    if (collectDetails) {
+                        damageDetails.isCrit = classResult.isCrit || false;
+                        damageDetails.critMultiplier = classResult.critMultiplier || 1.5;
+                        damageDetails.style = classResult.style || null;
+                        
+                        // Log for debugging
+                        console.log(`Critical hit info: isCrit=${damageDetails.isCrit}, multiplier=${damageDetails.critMultiplier}`);
+                    }
+                } else {
+                    // If it's just a number, use that as the damage
+                    damage = classResult || damage;
                 }
+                
+                console.log(`After class effects: ${originalDamage} → ${damage}${damageDetails.isCrit ? ' (CRITICAL HIT!)' : ''}`);
+            }
+            
+            if (collectDetails) {
+                damageDetails.totalDamage = damage;
             }
             
             // Player attacking enemy
             combatState.enemyHealth -= damage;
-            displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            
+            // Display appropriate message based on whether it was a critical hit
+            if (damageDetails && damageDetails.isCrit) {
+                displayCombatMessage(`CRITICAL HIT! You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            } else {
+                displayCombatMessage(`You dealt ${damage} damage to ${combatState.currentFight.enemy.name}!`);
+            }
+            
             console.log(`Final damage dealt to enemy: ${damage}`);
             
             // Apply reflect if active
@@ -1513,24 +1516,28 @@ function endPlayerTurn() {
                 synergyText = ` x${item.synergyMultiplier.toFixed(1)} (${item.synergyType})`;
             }
             
+            // Format critical hit text 
+            let critText = '';
+            if (item.isCrit) {
+                critText = ` x${item.critMultiplier || 1.5} (critical hit)`;
+            }
+            
             // Format multiplier texts
             const damageBoostText = item.damageBoost > 1.0 ? ` x${item.damageBoost.toFixed(1)} boost` : '';
             const defenseText = item.defenseMultiplier !== 1.0 ? ` x${item.defenseMultiplier.toFixed(1)} def` : '';
             const vulnText = item.vulnerabilityMultiplier !== 1.0 ? ` x${item.vulnerabilityMultiplier.toFixed(1)} vuln` : '';
             
-            // Add crit text if applicable
-            const critText = item.isCrit ? ' %cCRITICAL HIT!%c' : '';
+            // Style text if applicable
             const styleText = item.style ? ` (${item.style})` : '';
             
             // Combine all parts with different colors
             console.log(
-                `%c${item.cardName}:${critText} %c${item.damage} damage %c[${baseDamageText}%c${synergyText}%c]%c${damageBoostText}%c${defenseText}%c${vulnText}${styleText}`, 
+                `%c${item.cardName}: %c${item.damage} damage %c[${baseDamageText}%c${synergyText}%c${critText}%c]%c${damageBoostText}%c${defenseText}%c${vulnText}${styleText}`, 
                 'color:rgb(238, 53, 53); font-weight: bold;',   // Card name
-                item.isCrit ? 'color:rgb(255, 215, 0); font-weight: bold;' : '',  // CRITICAL HIT text
-                item.isCrit ? '' : '',  // Reset after CRITICAL HIT
                 'color:rgb(255, 0, 0); font-weight: bold;',     // Total damage
                 'color:rgb(0, 128, 0);',                        // Base damage
                 'color:rgb(255, 165, 0);',                      // Synergy multiplier
+                'color:rgb(255, 215, 0);',                      // Critical hit
                 'color:rgb(0, 128, 0);',                        // Closing bracket
                 'color:rgb(0, 0, 255);',                        // Damage boost
                 'color:rgb(128, 0, 128);',                      // Defense multiplier
