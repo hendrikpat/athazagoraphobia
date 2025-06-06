@@ -485,24 +485,6 @@ const classSystem = {
                 });
             }
             
-            // Shot style options
-            const shotStyleOptions = document.querySelectorAll('.ability-option');
-            shotStyleOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    const styleId = option.dataset.style;
-                    if (styleId) {
-                        this.selectShotStyle(styleId);
-                    }
-                });
-            });
-            
-            // Ultimate button
-            const ultimateButton = document.getElementById('ultimate-button');
-            if (ultimateButton) {
-                ultimateButton.addEventListener('click', () => {
-                    this.activateUltimate();
-                });
-            }
         } else if (this.activeClass === 'sword') {
             // Stance slot (for clearing with left-click and locking with right-click)
             const stanceSlot = document.getElementById('stance-slot');
@@ -523,25 +505,18 @@ const classSystem = {
                     return false;
                 });
             }
-            
-            // Stance options
-            const stanceOptions = document.querySelectorAll('.ability-option');
-            stanceOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    const stanceId = option.dataset.stance;
-                    if (stanceId) {
-                        this.selectStance(stanceId);
-                    }
-                });
-            });
-            
-            // Ultimate button
-            const ultimateButton = document.getElementById('ultimate-button');
-            if (ultimateButton) {
-                ultimateButton.addEventListener('click', () => {
+        }
+        
+        // Ultimate button (common for all classes)
+        const ultimateButton = document.getElementById('ultimate-button');
+        if (ultimateButton) {
+            ultimateButton.addEventListener('click', () => {
+                if (this.activeClass === 'bow') {
+                    this.activateUltimate();
+                } else if (this.activeClass === 'sword') {
                     this.activateSwordUltimate();
-                });
-            }
+                }
+            });
         }
     },
     
@@ -555,8 +530,12 @@ const classSystem = {
     
     // Select a shot style
     selectShotStyle: function(styleId) {
+        console.log(`selectShotStyle called with: ${styleId}`);
+        console.log(`Current state:`, this.state.bow);
+        
         // If the same style is already selected, unselect it
         if (this.state.bow.pendingShotStyle === styleId && !this.state.bow.shotStyleLocked) {
+            console.log('Unselecting same style');
             this.unselectShotStyle();
             return;
         }
@@ -574,11 +553,15 @@ const classSystem = {
             return;
         }
         
+        console.log(`Setting pending style to: ${styleId}`);
+        
         // Set the pending style
         this.state.bow.pendingShotStyle = styleId;
         
         // Update the UI
         const slot = document.getElementById('shot-style-slot');
+        console.log('Slot element:', slot);
+        
         if (slot) {
             slot.innerHTML = `
                 <div class="slotted-ability" style="background-color: ${style.color}">
@@ -586,6 +569,7 @@ const classSystem = {
                 </div>
             `;
             slot.classList.add('filled');
+            console.log('Updated slot UI');
         }
         
         const currentStyleIndicator = document.getElementById('current-shot-style');
@@ -893,6 +877,7 @@ const classSystem = {
     updateUltimateUI: function() {
         const ultimateFill = document.querySelector('.ultimate-fill');
         const ultimateButton = document.getElementById('ultimate-button');
+        const ultimateText = document.querySelector('.ultimate-text'); // Add this line
         
         if (!ultimateFill || !ultimateButton) return;
         
@@ -909,6 +894,11 @@ const classSystem = {
         
         // Update fill width
         ultimateFill.style.width = `${charge}%`;
+        
+        // Update text - ADD THIS
+        if (ultimateText) {
+            ultimateText.textContent = `Ultimate: ${Math.floor(charge)}%`;
+        }
         
         // Update button state
         if (ready) {

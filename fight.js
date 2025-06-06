@@ -1428,7 +1428,7 @@ function calculateSynergyBonusForCard(card, source) {
         const normalCount = affinities.filter(aff => aff === 'normal').length;
         if (normalCount >= 5) {
             console.log(`UNLUCK synergy detected for ${card.name}`);
-            return 0.5; // 50% damage reduction
+            return 2.2; // 120% damage increase
         }
     }
     
