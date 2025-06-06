@@ -775,6 +775,32 @@ body {
     border-radius: 5px;
 }
 
+#turn-messages {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    min-height: 40px;
+}
+
+.turn-message {
+    font-size: 14px;
+    line-height: 1.4;
+    font-style: italic;
+    color: #ccc;
+}
+
+#combat-field {
+    /* Make the container background invisible but keep content visible */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    /* Keep existing positioning and layout styles */
+}
+
 #player-area {
     display: flex;
     flex-direction: column;
@@ -1352,6 +1378,7 @@ body {
     padding: 5px;
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
+    background: transparent; /* Remove any background if present */
 }
 
 .affinity-icon-container {

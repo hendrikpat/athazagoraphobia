@@ -3,6 +3,12 @@
       "id": "wolves_fight",
       "name": "Wolf Pack Attack",
       "description": "A pack of wolves surrounds you in the forest.",
+      "turnText": {
+        "turn-1": "Tutorial: Select cards by clicking them. Selected cards show a number indicating play order. You need enough Focus to play cards - check the focus cost icons on each card.",
+        "turn-2": "Tutorial: Right-click cards to discard them (they won't be played but will be removed from your hand). This helps you get rid of unwanted cards.",
+        "turn-3": "Tutorial: Synergies boost damage! Play cards with matching affinities together: Fire+Water, Water+Thunder, Thunder+Fire, or Light+Dark pairs give +20% damage each.",
+        "turn-4": "Tutorial: Advanced synergies: 3 cards of the same element = +50% damage. All 5 elements (Fire, Water, Thunder, Light, Dark) = +100% damage. 5 Normal cards = +120% damage!"
+    },
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
@@ -40,6 +46,12 @@
       "id": "wolves_fight",
       "name": "Wolf Pack Attack",
       "description": "A pack of wolves surrounds you in the forest.",
+      "turnText": {
+        "turn-1": "Tutorial: Select cards by clicking them. Selected cards show a number indicating play order. You need enough Focus to play cards - check the focus cost icons on each card.",
+        "turn-2": "Tutorial: Right-click cards to discard them (they won't be played but will be removed from your hand). This helps you get rid of unwanted cards.",
+        "turn-3": "Tutorial: Synergies boost damage! Play cards with matching affinities together: Fire+Water, Water+Thunder, Thunder+Fire, or Light+Dark pairs give +20% damage each.",
+        "turn-4": "Tutorial: Advanced synergies: 3 cards of the same element = +50% damage. All 5 elements (Fire, Water, Thunder, Light, Dark) = +100% damage. 5 Normal cards = +120% damage!"
+    },
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
@@ -77,6 +89,12 @@
       "id": "wolves_fight",
       "name": "Wolf Pack Attack",
       "description": "A pack of wolves surrounds you in the forest.",
+      "turnText": {
+        "turn-1": "Tutorial: Select cards by clicking them. Selected cards show a number indicating play order. You need enough Focus to play cards - check the focus cost icons on each card.",
+        "turn-2": "Tutorial: Right-click cards to discard them (they won't be played but will be removed from your hand). This helps you get rid of unwanted cards.",
+        "turn-3": "Tutorial: Synergies boost damage! Play cards with matching affinities together: Fire+Water, Water+Thunder, Thunder+Fire, or Light+Dark pairs give +20% damage each.",
+        "turn-4": "Tutorial: Advanced synergies: 3 cards of the same element = +50% damage. All 5 elements (Fire, Water, Thunder, Light, Dark) = +100% damage. 5 Normal cards = +120% damage!"
+    },
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",
@@ -114,6 +132,12 @@
       "id": "wolves_fight",
       "name": "Wolf Pack Attack",
       "description": "A pack of wolves surrounds you in the forest.",
+      "turnText": {
+        "turn-1": "Tutorial: Select cards by clicking them. Selected cards show a number indicating play order. You need enough Focus to play cards - check the focus cost icons on each card.",
+        "turn-2": "Tutorial: Right-click cards to discard them (they won't be played but will be removed from your hand). This helps you get rid of unwanted cards.",
+        "turn-3": "Tutorial: Synergies boost damage! Play cards with matching affinities together: Fire+Water, Water+Thunder, Thunder+Fire, or Light+Dark pairs give +20% damage each.",
+        "turn-4": "Tutorial: Advanced synergies: 3 cards of the same element = +50% damage. All 5 elements (Fire, Water, Thunder, Light, Dark) = +100% damage. 5 Normal cards = +120% damage!"
+      },
       "enemy": {
         "name": "Wolf Pack",
         "description": "A group of hungry wolves with sharp teeth and claws.",

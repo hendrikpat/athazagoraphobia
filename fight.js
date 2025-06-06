@@ -168,6 +168,10 @@ function initiateCombat(fight) {
     
     // Display the combat UI
     displayCombatUI();
+
+    setTimeout(() => {
+        displayTurnMessage();
+    }, 100);
     
     console.log("Combat initialized:", combatState);
 }
@@ -411,7 +415,11 @@ function displayCombatUI() {
             <div id="combat-messages">
                 <div class="combat-message">${combatState.currentFight.description || 'Combat started!'}</div>
             </div>
-            
+
+            <div id="turn-messages">
+                <div class="turn-message"></div>
+            </div>
+
             <div id="combat-field"></div>
             
             <div id="player-area">
@@ -1488,6 +1496,33 @@ function displayCombatMessage(message) {
     }
 }
 
+// Display turn-based message
+function displayTurnMessage() {
+    const turnMessagesDiv = document.getElementById('turn-messages');
+    if (!turnMessagesDiv) return;
+    
+    const currentFight = combatState.currentFight;
+    if (!currentFight || !currentFight.turnText) {
+        return;
+    }
+    
+    // Find the most recent turn text that should be displayed
+    let messageToShow = '';
+    let highestValidTurn = 0;
+    
+    for (const turnKey in currentFight.turnText) {
+        const turnNumber = parseInt(turnKey.replace('turn-', ''));
+        if (turnNumber <= combatState.turnCount && turnNumber > highestValidTurn) {
+            highestValidTurn = turnNumber;
+            messageToShow = currentFight.turnText[turnKey];
+        }
+    }
+    
+    if (messageToShow) {
+        turnMessagesDiv.innerHTML = `<div class="turn-message">${messageToShow}</div>`;
+    }
+}
+
 // End player turn
 function endPlayerTurn() {
     // Remove all indicators
@@ -1585,7 +1620,9 @@ function startPlayerTurn() {
     
     combatState.turnCount++;
     displayCombatMessage(`--- Turn ${combatState.turnCount}: Your Turn ---`);
-    
+
+    displayTurnMessage();
+
     // Reset defense multiplier each turn
     combatState.playerDefenseMultiplier = 1.0;
     
