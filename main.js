@@ -316,6 +316,9 @@ async function displayScene(sceneId) {
         
         contentArea.innerHTML = content;
         
+        // Update character stats display on every scene load
+        updateStatsDisplay();
+        
         // Set up event listeners for special scenes
         if (actualSceneId === 'self_focus') {
             document.getElementById('name-submit').addEventListener('click', function() {
@@ -452,6 +455,9 @@ async function displaySystemScreen(screenId) {
     }
     
     contentArea.innerHTML = content;
+    
+    // Update character stats display when showing system screens too
+    updateStatsDisplay();
     
     // Execute onLoadFunction if specified
     if (screen.onLoadFunction) {
@@ -1232,84 +1238,15 @@ function generateFantasyName() {
     return randomPrefix + randomSuffix;
 }
 
-// Event listeners for character creation
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize stats display
-    updateStatsDisplay();
+function updateStatsDisplay() {
+    const nameElement = document.getElementById('char-name');
+    const genderElement = document.getElementById('char-gender');
     
-    // Handle name generation
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'generate-name') {
-            const generatedName = generateFantasyName();
-            const nameInput = document.getElementById('player-name');
-            if (nameInput) {
-                nameInput.value = generatedName;
-                setTimeout(() => {
-                    nameInput.style.backgroundColor = '';
-                }, 500);
-            }
-        }
-        
-        // Handle name submission
-        if (e.target && e.target.id === 'name-submit') {
-            const nameInput = document.getElementById('player-name');
-            if (nameInput && nameInput.value.trim()) {
-                const enteredName = nameInput.value.trim();
-                
-                // Update both our stats and the game's character system
-                characterStats.name = enteredName;
-                
-                // Update game state if it exists
-                if (typeof gameState !== 'undefined' && gameState.character) {
-                    gameState.character.name = enteredName;
-                } else if (typeof window.character !== 'undefined') {
-                    window.character.name = enteredName;
-                }
-                
-                updateStatsDisplay();
-                
-                // Add visual feedback
-                const statsNameElement = document.getElementById('char-name');
-                if (statsNameElement) {
-                    statsNameElement.style.color = '#48bb78';
-                    setTimeout(() => {
-                        statsNameElement.style.color = '#e2e8f0';
-                    }, 1000);
-                }
-            }
-        }
-        
-        // Handle gender selection
-        if (e.target && e.target.classList.contains('gender-option')) {
-            // Remove selected class from all options
-            document.querySelectorAll('.gender-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked option
-            e.target.classList.add('selected');
-            
-            // Update character stats
-            characterStats.gender = e.target.id === 'male-option' ? 'Male' : 'Female';
-            updateStatsDisplay();
-            
-            // Add visual feedback
-            const statsGenderElement = document.getElementById('char-gender');
-            if (statsGenderElement) {
-                statsGenderElement.style.color = '#48bb78';
-                setTimeout(() => {
-                    statsGenderElement.style.color = '#e2e8f0';
-                }, 1000);
-            }
-        }
-    });
-});
-
-
-
-
-
-
-
-
-
+    // Get values directly from gameState
+    const displayName = (gameState.character && gameState.character.name) ? gameState.character.name : 'Unknown';
+    const displayGender = (gameState.character && gameState.character.gender) ? 
+        gameState.character.gender.charAt(0).toUpperCase() + gameState.character.gender.slice(1) : 'Unknown';
+    
+    if (nameElement) nameElement.textContent = displayName;
+    if (genderElement) genderElement.textContent = displayGender;
+}

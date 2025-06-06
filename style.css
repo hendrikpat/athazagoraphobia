@@ -1,47 +1,48 @@
 /* Character Stats Styling */
 .stats-container {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border: 2px solid #4a5568;
-    border-radius: 8px;
-    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 0;
     margin: 15px 0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    width: 100%;
 }
 
 .stats-header {
-    color: #f7fafc;
+    color: var(--header-color);
     font-weight: bold;
-    font-size: 14px;
+    font-size: 16px;
     text-align: center;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #4a5568;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--divider-color);
     letter-spacing: 1px;
+    font-family: 'Inknut Antiqua', serif;
+    width: 100%;
+    display: block; /* Ensure it takes full width */
 }
 
 .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 2px 0;
-    padding: 2px 0;
+    display: block; /* Changed from flex to block to force new lines */
+    text-align: center; /* Center the text within each row */
+    margin: 8px 0;
+    padding: 4px 0;
+    width: 100%;
 }
 
 .stat-label {
-    color: #a0aec0;
-    font-size: 12px;
-    font-weight: 500;
+    color: var(--accent-color);
+    font-size: 14px;
+    font-weight: 600;
+    margin-right: 8px;
+    display: inline; /* Keep label and value on same line within the row */
 }
 
 .stat-value {
-    color: #e2e8f0;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: right;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: normal;
+    display: inline; /* Keep label and value on same line within the row */
 }
 
 /* Gender selection styling */
@@ -490,25 +491,6 @@ body {
 .back-button:hover {
     background-color: rgba(255, 255, 255, 0.2);
     border-color: var(--accent-color);
-}
-
-/* Character Stats */
-.stats-container {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.stat-item {
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 10px;
-    border-radius: 4px;
-}
-
-.stat-label {
-    font-weight: bold;
-    color: var(--accent-color);
 }
 
 /* Save System */
